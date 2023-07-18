@@ -49,7 +49,7 @@ create_df <- function(planning_grid, features, patches, costs, locked_out, locke
             {data.frame(locked_in = ifelse(. > 0, 1, 0))}
         ) %>%
         mutate(
-          seamount = unname(
+          patches = unname(
             raster::cellStats(patches[[i]], "sum", na.rm = TRUE)
           )
         )
@@ -78,61 +78,46 @@ create_df <- function(planning_grid, features, patches, costs, locked_out, locke
     patches <- patches %>% sf::st_drop_geometry()
 
     # Create planning units at the patch level
-  }
-
-  # Create planning units at the patch level
-  pu_sm_data <- lapply(names(patches)[grepl("patches", names(patches))], function(i) {
-    curr_sm_pu <-
-      tibble::tibble(
-        id = list(row.names(patches[which(patches[,i] > 0.5),]))) %>%
-      bind_cols(costs %>%
-                  dplyr::mutate_all(., ~(.*patches[,i])) %>%
-                  colSums(., na.rm = T)) %>%
-      bind_cols(features %>% dplyr::mutate_all(., ~(.*patches[,i])) %>%
-                  colSums(., na.rm = T)) %>%
-      bind_cols(locked_out %>% dplyr::mutate_all(., ~(.*patches[,i])) %>%
-                  colSums(., na.rm = T) %>%
-                  dplyr::mutate_all(., ~(ifelse, . > 0, 1, 0))
+    pu_sm_data <- lapply(names(patches)[grepl("patches", names(patches))], function(i) {
+      curr_sm_pu <-
+        tibble::tibble(
+          id = list(row.names(patches[which(patches[,i] > 0.5),]))) %>%
+        bind_cols(costs %>%
+                    dplyr::mutate_all(., ~(.*patches[,i])) %>%
+                    colSums(., na.rm = T)) %>%
+        bind_cols(features %>% dplyr::mutate_all(., ~(.*patches[,i])) %>%
+                    colSums(., na.rm = T)) %>%
+        bind_cols(locked_out %>% dplyr::mutate_all(., ~(.*patches[,i])) %>%
+                    colSums(., na.rm = T) %>%
+                    dplyr::mutate_all(., ~(ifelse, . > 0, 1, 0))
                   {data.frame(locked_out = ifelse(. > 0, 1, 0))}) %>%
-      bind_cols(
-        terra::as.data.frame(locked_in * patches[[i]]) %>%
-          sum(na.rm = TRUE) %>%
-          {data.frame(locked_in = ifelse(. > 0, 1, 0))}
-      ) %>%
-      mutate(
-        seamount = unname(
-          raster::cellStats(patches[[i]], "sum", na.rm = TRUE)
+        bind_cols(locked_in %>% dplyr::mutate_all(., ~(.*patches[,i])) %>%
+                    colSums(., na.rm = T) %>%
+                    dplyr::mutate_all(., ~(ifelse, . > 0, 1, 0))
+                  {data.frame(locked_in = ifelse(. > 0, 1, 0))}) %>%
+        mutate(
+          patches = unname(
+            raster::cellStats(patches[[i]], "sum", na.rm = TRUE)
+          )
         )
-      )
-    curr_sm_pu
+      curr_sm_pu
+    }
+    ) %>%
+      do.call(what = bind_rows) %>% as_tibble() %>%
+      relocate(locked_out, .after = last_col()) %>%
+      relocate(locked_in, .after = last_col())
   }
-  ) %>%
-    do.call(what = bind_rows) %>% as_tibble() %>%
-    relocate(locked_out, .after = last_col()) %>%
-    relocate(locked_in, .after = last_col())
 
-  ###############################################################
-
-  # merge sea mount-level data and grid-cell level data together
+  # Merge sea mount-level data and grid-cell level data together
   pu_data <- bind_rows(pu_grid_data, pu_sm_data)
-
-  ###############################################################
-
-  ## add in constraints to ensure that the solution won't select
-  ## spatially overlapping grid-cell level and seamount-level planning units
-
-  start <- Sys.time()
-
-  #list to store all constraints
-  #constraints_list <- list()
-
+  # Constraints so the solution doesn't select overlapping grid cell and patch level planning units
   constraints <- data.frame(test  = rep(0,nrow(pu_data)))
 
   index <- 1
 
-  #notes JF: This makes a vector with a '1' for each combination of seamount level planning unit and grid-cell level planning unit that overlaps with that seamount.
+  #Create a vector with a '1' for each combination of patch-level and grid-cell level planning unit that overlaps with that patch.
   for (i in seq_len(nrow(pu_sm_data))) {
-    print(paste0("Processing seamount ", i, " of ", nrow(pu_sm_data)))
+    print(paste0("Processing patch ", i, " of ", nrow(pu_sm_data)))
 
     for (j in pu_sm_data$id[[i]]) {
 
@@ -153,8 +138,6 @@ create_df <- function(planning_grid, features, patches, costs, locked_out, locke
 
   #remove dummy row
   constraints <- constraints[, -1]
-
-  Sys.time()-start
 
   #################################################################
 
