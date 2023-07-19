@@ -26,12 +26,21 @@ create_patches <- function(feature, planning_grid) {
       setNames(paste0("patches_", seq_len(terra::nlyr(.))))
   } else {
     feature <- feature %>%
-      sf::st_cast("POLYGON", warn = FALSE) %>%
-      dplyr::mutate(value = 1,
-                    patches = paste0("patches_", 1:nrow(.))) %>%
-      tidyr::pivot_wider(names_from = "patches", values_from = "value") %>%
-      dplyr::select(colnames(.)[grepl("patches", colnames(.))]) %>%
-      sf::st_join(planning_grid, ., largest = TRUE)}
+      dplyr::rename(value = 1) %>%
+      dplyr::filter(value == 1)
 
+    feature_matrix <- sf::st_touches(feature, sparse = F)
+    hc <- hclust(as.dist(!feature_matrix), method = "single")
+    feature_groups <- cutree(hc, h = 0.5)
+
+    suppressWarnings({
+      feature <- feature %>%
+        dplyr::mutate(patches = paste0("patches_", feature_groups)) %>%
+        dplyr::mutate(value = 1) %>%
+        tidyr::pivot_wider(names_from = "patches", values_from = "value") %>%
+        sf::st_join(planning_grid %>% dplyr::select(geometry), ., largest = TRUE) %>%
+        dplyr::select(colnames(.)[grepl("patches", colnames(.))])
+    })
+  }
   return(feature)
 }
