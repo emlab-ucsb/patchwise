@@ -19,51 +19,83 @@ create_df <- function(planning_grid, features, patches, costs, locked_out, locke
         stop("features, patches, costs, locked out, and locked in objects must be of the same class")
         }
       }
-    }
+  }
+  rm(options)
 
   if (class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster")) {
     # Initialize
     pu_grid_data <- tibble::tibble(id = as.list(seq_len(nrow(terra::as.data.frame(planning_grid))))) %>%
-      dplyr::bind_cols(tibble::tibble(terra::as.data.frame(costs))) %>%
       dplyr::bind_cols(tibble::tibble(terra::as.data.frame(features))) %>%
-      dplyr::mutate(patch = 0) %>%
-      dplyr::bind_cols(tibble::tibble(terra::as.data.frame(locked_out))) %>%
-      dplyr::bind_cols(tibble::tibble(terra::as.data.frame(locked_in)))
+      dplyr::mutate(patch = 0)
+
+    if(!is.null(supplied)) {
+      for(options in supplied) {
+        pu_grid_data <- pu_grid_data %>%
+          dplyr::bind_cols(tibble::tibble(terra::as.data.frame(eval(as.name(options)))))
+        }
+      }
 
     # Create planning units at the patch level
     pu_sm_data <- lapply(names(patches), function(i) {
       curr_sm_pu <-
         tibble::tibble(
           id = list(as.numeric(row.names(terra::as.data.frame(patches[[i]]))[which(terra::as.data.frame(patches[[i]]) > 0.5)]))) %>%
-        dplyr::bind_cols(
-          terra::as.data.frame(costs * patches[[i]]) %>%
-            setNames(names(costs)) %>%
-            dplyr::summarize_all(sum, na.rm=TRUE)
-        ) %>%
+        # dplyr::bind_cols(
+        #   terra::as.data.frame(costs * patches[[i]]) %>%
+        #     setNames(names(costs)) %>%
+        #     dplyr::summarize_all(sum, na.rm=TRUE)
+        # ) %>%
         dplyr::bind_cols(
           terra::as.data.frame(features * patches[[i]]) %>%
             setNames(names(features)) %>%
             dplyr::summarize_all(sum, na.rm = TRUE)
-        ) %>%
-        dplyr::bind_cols(
-          terra::as.data.frame(locked_out * patches[[i]]) %>%
-            sum(na.rm = TRUE) %>%
-            {data.frame(locked_out = ifelse(. > 0, 1, 0))}
-        ) %>%
-        dplyr::bind_cols(
-          terra::as.data.frame(locked_in * patches[[i]]) %>%
-            sum(na.rm = TRUE) %>%
-            {data.frame(locked_in = ifelse(. > 0, 1, 0))}
-        ) %>%
+        )
+
+      if(!is.null(supplied)) {
+        for(options in supplied) {
+          if(grepl("locked", options)) {
+            curr_sm_pu <- curr_sm_pu %>%
+              dplyr::bind_cols(
+                terra::as.data.frame(eval(as.name(options)) * patches[[i]]) %>%
+                  sum(na.rm = TRUE) %>%
+                  {data.frame(options = ifelse(. > 0, 1, 0))})
+          } else {
+          curr_sm_pu <- curr_sm_pu %>%
+            dplyr::bind_cols(
+              terra::as.data.frame(eval(as.name(options)) * patches[[i]]) %>%
+                setNames(names(eval(as.name(options)))) %>%
+                dplyr::summarize_all(sum, na.rm=TRUE))
+          }
+        }
+      }
+
+        # dplyr::bind_cols(
+        #   terra::as.data.frame(locked_out * patches[[i]]) %>%
+        #     sum(na.rm = TRUE) %>%
+        #     {data.frame(locked_out = ifelse(. > 0, 1, 0))}
+        # ) %>%
+        # dplyr::bind_cols(
+        #   terra::as.data.frame(locked_in * patches[[i]]) %>%
+        #     sum(na.rm = TRUE) %>%
+        #     {data.frame(locked_in = ifelse(. > 0, 1, 0))}
+
+      curr_sm_pu <- curr_sm_pu %>%
         dplyr::mutate(
           patch = sum(terra::values(patches[[i]]), na.rm = T)
         )
       curr_sm_pu
     }
     ) %>%
-      do.call(what = dplyr::bind_rows) %>% tibble::as_tibble() %>%
-      dplyr::relocate(locked_out, .after = last_col()) %>%
-      dplyr::relocate(locked_in, .after = last_col())
+      do.call(what = dplyr::bind_rows) %>% tibble::as_tibble()
+
+    if("locked_out" %in% supplied) {
+      pu_sm_data <-  pu_sm_data %>%
+        dplyr::relocate(locked_out, .after = last_col())
+    }
+    if("locked_in" %in% supplied) {
+      pu_sm_data <-  pu_sm_data %>%
+        dplyr::relocate(locked_in, .after = last_col())
+    }
 
   } else {
     # Drop all geometries
