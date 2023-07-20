@@ -11,7 +11,7 @@ if (!require(devtools)) install.packages("devtools")
 devtools::install_github("emlab-ucsb/patchwise")
 ```
 
-You can install `offshoredatr` from GitHuv with: 
+You can install `offshoredatr` from GitHub with: 
 
 ```
 if (!require(devtools)) install.packages("devtools")
