@@ -26,10 +26,10 @@
 #' # Solve problem
 #' solution <- solve(problem_raster)
 #' # Convert to a more digestible format
-#' suggested_protection <- convert_solution(solution = solution, patches_df = patch_raster_df, planning_grid = planning_raster)
+#' suggested_protection <- convert_solution(solution = solution, patch_df = patch_raster_df, planning_grid = planning_raster)
 
 convert_solution <- function(solution, patch_df, planning_grid) {
-  planning_unit_id <-  unique(unlist(patches_df$id[which(solution$solution_1 > 0.5)]))
+  planning_unit_id <-  unique(unlist(patch_df$id[which(solution$solution_1 > 0.5)]))
 
   if(class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster")){
     solution <- planning_grid*0
