@@ -44,14 +44,14 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
 
   if (class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster")) {
     # Initialize
-    pu_grid_data <- tibble::tibble(id = as.list(seq_len(nrow(terra::as.data.frame(planning_grid))))) %>%
-      dplyr::bind_cols(tibble::tibble(terra::as.data.frame(features))) %>%
+    pu_grid_data <- tibble::tibble(id = as.list(seq_len(nrow(terra::as.data.frame(planning_grid, na.rm = FALSE))))) %>%
+      dplyr::bind_cols(tibble::tibble(terra::as.data.frame(features, na.rm = FALSE))) %>%
       dplyr::mutate(patch = 0)
 
     if(!is.null(supplied)) {
       for(options in supplied) {
         pu_grid_data <- pu_grid_data %>%
-          dplyr::bind_cols(tibble::tibble(terra::as.data.frame(get(options))))
+          dplyr::bind_cols(tibble::tibble(terra::as.data.frame(get(options), na.rm = FALSE)))
         }
       }
 
@@ -59,9 +59,9 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
     pu_sm_data <- lapply(names(patches), function(i) {
       curr_sm_pu <-
         tibble::tibble(
-          id = list(as.numeric(row.names(terra::as.data.frame(patches[[i]]))[which(terra::as.data.frame(patches[[i]]) > 0.5)]))) %>%
+          id = list(as.numeric(row.names(terra::as.data.frame(patches[[i]], na.rm = FALSE))[which(terra::as.data.frame(patches[[i]], na.rm = FALSE) > 0.5)]))) %>%
        dplyr::bind_cols(
-          terra::as.data.frame(features * patches[[i]]) %>%
+          terra::as.data.frame(features * patches[[i]], na.rm = FALSE) %>%
             setNames(names(features)) %>%
             dplyr::summarize_all(sum, na.rm = TRUE)
         )
@@ -71,14 +71,14 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
           if(grepl("locked", options)) {
             curr_sm_pu <- curr_sm_pu %>%
               dplyr::bind_cols(
-                terra::as.data.frame(get(options) * patches[[i]]) %>%
+                terra::as.data.frame(get(options) * patches[[i]], na.rm = FALSE) %>%
                   sum(na.rm = TRUE) %>%
                   {data.frame(value = ifelse(. > 0, 1, 0)) %>%
                       dplyr::rename(!!options := value)})
           } else {
           curr_sm_pu <- curr_sm_pu %>%
             dplyr::bind_cols(
-              terra::as.data.frame(get(options) * patches[[i]]) %>%
+              terra::as.data.frame(get(options) * patches[[i]], na.rm = FALSE) %>%
                 setNames(names(get(options))) %>%
                 dplyr::summarize_all(sum, na.rm=TRUE))
           }
@@ -120,7 +120,7 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
     if(!is.null(supplied)) {
       for(options in supplied) {
         pu_grid_data <- pu_grid_data %>%
-          dplyr::bind_cols(tibble::tibble(terra::as.data.frame(get(options))))
+          dplyr::bind_cols(tibble::tibble(terra::as.data.frame(get(options), na.rm = FALSE)))
       }
     }
 
