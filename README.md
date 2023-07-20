@@ -89,4 +89,26 @@ terra::plot(result)
 
 ![image](https://github.com/echelleburns/patchwise/assets/40546424/8d64a8a0-375e-420a-9bb6-f5b4158e068c)
 
-Areas in green were identified by `prioritizr` as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts.
+Areas in green were identified by `prioritizr` as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a `prioritizr` run that does not protect whole seamounts: 
+
+```
+# Grab all relevant data
+features_rast <- offshoredatr::get_features(area, planning_rast)
+
+# Run the prioritization
+problem_rast <- prioritizr::problem(x = cost_rast, features = features_rast) %>%
+  prioritizr::add_min_set_objective() %>%
+  prioritizr::add_relative_targets(rep(0.2, terra::nlyr(features_rast))) %>%
+  prioritizr::add_binary_decisions() %>%
+  prioritizr::add_boundary_penalties(penalty = 0.000002) %>%
+  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+
+# Solve the prioritization
+solution <- solve(problem_rast)
+
+# Show the results
+terra::plot(result)
+```
+![image](https://github.com/echelleburns/patchwise/assets/40546424/a77660ee-aa90-437e-9714-49243d5c7950)
+
+Only portions of seamount units are protected here.
