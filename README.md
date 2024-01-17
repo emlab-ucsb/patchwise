@@ -1,6 +1,6 @@
 # patchwise
 
-`patchwise` is intended to be used as a supplementary package to `offshoredatr` for instances in which users wish to protect entire "chunks" of areas using `prioritizr`. 
+`patchwise` is intended to be used as a supplementary package to `oceandatr` for instances in which users wish to protect entire "chunks" of areas using `prioritizr`. 
 One example is when a user wishes to include seamounts as a feature to protect in `prioritizr` with a target of 20%. Instead of protecting a little bit of each seamount until the 20% is reached, `patchwise` makes it easy to ensure that entire seamounts are protected sequentially to meet the protection target.
 
 ## Installation
@@ -11,34 +11,34 @@ if (!require(devtools)) install.packages("devtools")
 devtools::install_github("emlab-ucsb/patchwise")
 ```
 
-You can install `offshoredatr` from GitHub with: 
+You can install `oceandatr` from GitHub with: 
 
 ```
 if (!require(devtools)) install.packages("devtools")
-devtools::install_github("emlab-ucsb/offshoredatr")
+devtools::install_github("emlab-ucsb/oceandatr")
 ```
 
 For our examples, we use the prioritization optimizer `gurobi`, which can be found [here](https://www.gurobi.com/solutions/gurobi-optimizer/?campaignid=193283256&adgroupid=138872523240&creative=596136082788&keyword=gurobi%20optimization&matchtype=e&gclid=CjwKCAjwtuOlBhBREiwA7agf1oUW5qsO9aXGpfbjy04XRAw0DRpVGdSlrnEYRyC2q-B9EafXdArQUhoCDxQQAvD_BwE). Gurobi must be installed on your device and the `gurobi` R package must also be installed in R before you can run `prioritizr`.
 
 ## Example of usage
 
-Since this package is intended to be used in combination with `offshoredatr`, there are several housekeeping steps that need to be completed first. Note that even though the example uses rasters, the functions can work with `sf` objects as well.
+Since this package is intended to be used in combination with `oceandatr`, there are several housekeeping steps that need to be completed first. Note that even though the example uses rasters, the functions can work with `sf` objects as well.
 
 ```
 # Load libraries
-library(offshoredatr) # not entirely needed here, since we call to the package directly
+library(oceandatr) # not entirely needed here, since we call to the package directly
 library(patchwise) # also not entirely needed here, since we call to the package directly
 library(prioritizr) # required due to dependencies with gurobi
 
 # Choose area of interest (Bermuda EEZ)
-area <- offshoredatr::get_area(area_name = "Bermuda")
+area <- oceandatr::get_area(area_name = "Bermuda")
 projection <- 'PROJCS["ProjWiz_Custom_Lambert_Azimuthal", GEOGCS["GCS_WGS_1984", DATUM["D_WGS_1984", SPHEROID["WGS_1984",6378137.0,298.257223563]], PRIMEM["Greenwich",0.0], UNIT["Degree",0.0174532925199433]], PROJECTION["Lambert_Azimuthal_Equal_Area"], PARAMETER["False_Easting",0.0], PARAMETER["False_Northing",0.0], PARAMETER["Central_Meridian",-64.5], PARAMETER["Latitude_Of_Origin",32], UNIT["Meter",1.0]]'
 
 # Create a planning grid
-planning_rast <- offshoredatr::get_planning_grid(area, projection = projection)
+planning_rast <- oceandatr::get_planning_grid(area, projection = projection)
 
 # Grab all relevant data
-features_rast <- offshoredatr::get_features(area, planning_rast)
+features_rast <- oceandatr::get_features(area, planning_rast)
 
 # Create a "cost" to protecting a cell - just a uniform cost for this example
 cost_rast <- setNames(planning_rast, "cost")
@@ -93,7 +93,7 @@ Areas in green were identified by `prioritizr` as areas worth protecting. We can
 
 ```
 # Grab all relevant data
-features_rast <- offshoredatr::get_features(area, planning_rast)
+features_rast <- oceandatr::get_features(area, planning_rast)
 
 # Run the prioritization
 problem_rast <- prioritizr::problem(x = cost_rast, features = features_rast) %>%
