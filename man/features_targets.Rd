@@ -30,7 +30,25 @@ A data frame to be used to specify targets for features. Will need to be plugged
 This function creates a dataframe of targets for each of the features to be used in the prioritization
 }
 \examples{
-## To be updated later
+# Start with a little housekeeping to get the data from oceandatr
+# Choose area of interest (Bermuda EEZ)
+area <- oceandatr::get_area(area_name = "Bermuda")
+projection <-'+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
+# Create a planning grid
+planning_raster <- oceandatr::get_planning_grid(area, projection = projection)
+# Grab all relevant data
+features_raster <- oceandatr::get_features(planning_grid = planning_raster)
+# Separate seamount data - we want to protect entire patches
+seamounts_raster <- features_raster[["seamounts"]]
+features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
+# Create a "cost" to protecting a cell - just a uniform cost for this example
+cost_raster <- setNames(planning_raster, "cost")
+# Create patches from layer
+patches_raster <- create_patches(seamounts_raster)
+# Create patch dataframe
+patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
+# Create boundary matrix for prioritizr
+boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster, patch_df = patches_raster_df)
 # Create target features - using just 20\% for every feature
 features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1), features = features_raster, pre_patches = seamounts_raster)
 }

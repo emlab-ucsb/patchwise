@@ -13,11 +13,23 @@
 #' @export
 #'
 #' @examples
-#' ## To be updated later
-#' # Create patches from seamount raster data
-#' seamount_patches <- create_patches(seamount_raster)
-#' # Create dataframe from patches
-#' patches_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = seamount_patches)
+#'# Start with a little housekeeping to get the data from oceandatr
+#'# Choose area of interest (Bermuda EEZ)
+#'area <- oceandatr::get_area(area_name = "Bermuda")
+#'projection <-'+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
+#'# Create a planning grid
+#'planning_raster <- oceandatr::get_planning_grid(area, projection = projection)
+#'# Grab all relevant data
+#'features_raster <- oceandatr::get_features(planning_grid = planning_raster)
+#'# Separate seamount data - we want to protect entire patches
+#'seamounts_raster <- features_raster[["seamounts"]]
+#'features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
+#'# Create a "cost" to protecting a cell - just a uniform cost for this example
+#'cost_raster <- setNames(planning_raster, "cost")
+#'# Create patches from layer
+#'patches_raster <- create_patches(seamounts_raster)
+#'# Create patch dataframe
+#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
 
 create_patch_df <- function(planning_grid, features, patches, costs = NULL, locked_out = NULL, locked_in = NULL){
 
