@@ -37,6 +37,9 @@ convert_solution <- function(solution, patch_df, planning_grid) {
     setNames(solution, "protected")
   } else {
     solution <- planning_grid %>%
+      sf::st_drop_geometry() %>%
+      dplyr::mutate(geometry = sf::st_geometry(planning_grid)) %>%
+      sf::st_set_geometry(., "geometry") %>%
       dplyr::select(geometry) %>%
       dplyr::mutate(protected = 0)
 

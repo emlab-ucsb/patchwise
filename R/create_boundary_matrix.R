@@ -38,6 +38,9 @@ create_boundary_matrix <- function(planning_grid, patches, patch_df){
 
   planning_unit_sf <-
     planning_grid_sf %>%
+    sf::st_drop_geometry() %>%
+    dplyr::mutate(geometry = sf::st_geometry(planning_grid_sf)) %>%
+    sf::st_set_geometry(., "geometry") %>%
     dplyr::select(geometry) %>%
     dplyr::bind_rows(
       lapply(patch_ids, function(i) {

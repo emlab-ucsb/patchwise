@@ -8,11 +8,12 @@ test_that("create patches from seamount data - raster", {
     planning_rast <- oceandatr::get_planning_grid(area, projection = projection)
 
     # Grab all relevant data
-    features_rast <- suppressMessages(oceandatr::get_features(area, planning_rast))
+    features_rast <- suppressMessages(suppressWarnings(oceandatr::get_features(planning_grid = planning_rast)))
 
     # Separate seamount data - we want to protect entire patches
     seamounts_rast <- features_rast[["seamounts"]]
-    patchwise::create_patches(seamounts_rast)
+
+    suppressMessages(create_patches(seamounts_rast))
     },
     class = "SpatRaster")
 })
@@ -27,12 +28,12 @@ test_that("create patches from seamount data - sf", {
     planning_sf <- oceandatr::get_planning_grid(area, projection = projection, option = "sf_square")
 
     # Grab all relevant data
-    features_sf <- suppressMessages(oceandatr::get_features(area, planning_sf))
+    features_sf <- suppressMessages(suppressWarnings(oceandatr::get_features(planning_grid = planning_sf)))
 
     # Separate seamount data - we want to protect entire patches
     seamounts_sf <- features_sf %>% dplyr::select(seamounts)
 
-    patchwise::create_patches(seamounts_sf, planning_grid = planning_sf %>% dplyr::rename(geometry = x))
+    suppressMessages(create_patches(seamounts_sf, planning_grid = planning_sf))
     },
     class = "sf")
 })

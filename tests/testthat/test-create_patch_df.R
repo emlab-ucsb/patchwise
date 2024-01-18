@@ -1,5 +1,5 @@
-test_that("create boundary matrix - raster", {
-  expect_s4_class(
+test_that("convert seamount data to df - raster", {
+  expect_s3_class(
     # Choose area of interest (Bermuda EEZ)
     {area <- oceandatr::get_area(area_name = "Bermuda")
     projection <- 'PROJCS["ProjWiz_Custom_Lambert_Azimuthal", GEOGCS["GCS_WGS_1984", DATUM["D_WGS_1984", SPHEROID["WGS_1984",6378137.0,298.257223563]], PRIMEM["Greenwich",0.0], UNIT["Degree",0.0174532925199433]], PROJECTION["Lambert_Azimuthal_Equal_Area"], PARAMETER["False_Easting",0.0], PARAMETER["False_Northing",0.0], PARAMETER["Central_Meridian",-64.5], PARAMETER["Latitude_Of_Origin",32], UNIT["Meter",1.0]]'
@@ -21,19 +21,13 @@ test_that("create boundary matrix - raster", {
     cost_rast <- setNames(planning_rast, "cost")
 
     # Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-    patches_df_rast <- create_patch_df(planning_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast)
-
-    # Create boundary matrix
-    create_boundary_matrix(planning_grid = planning_rast,
-                           patches = patches_rast,
-                           patch_df = patches_df_rast)
-
+    suppressMessages(create_patch_df(planning_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast))
     },
-    class = "Matrix")
+    class = "tbl_df")
 })
 
-test_that("create boundary matrix - sf", {
-  expect_s4_class(
+test_that("convert seamount data to df - sf", {
+  expect_s3_class(
     # Choose area of interest (Bermuda EEZ)
     {area <- oceandatr::get_area(area_name = "Bermuda")
     projection <- 'PROJCS["ProjWiz_Custom_Lambert_Azimuthal", GEOGCS["GCS_WGS_1984", DATUM["D_WGS_1984", SPHEROID["WGS_1984",6378137.0,298.257223563]], PRIMEM["Greenwich",0.0], UNIT["Degree",0.0174532925199433]], PROJECTION["Lambert_Azimuthal_Equal_Area"], PARAMETER["False_Easting",0.0], PARAMETER["False_Northing",0.0], PARAMETER["Central_Meridian",-64.5], PARAMETER["Latitude_Of_Origin",32], UNIT["Meter",1.0]]'
@@ -57,12 +51,7 @@ test_that("create boundary matrix - sf", {
       dplyr::select(cost)
 
     # Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-    patches_df_square <- create_patch_df(planning_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf)
-
-    # Create boundary matrix
-    create_boundary_matrix(planning_grid = planning_sf,
-                           patches = patches_sf,
-                           patch_df = patches_df_square)
+    suppressMessages(create_patch_df(planning_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf))
     },
-    class = "Matrix")
+    class = "tbl_df")
 })

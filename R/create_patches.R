@@ -43,7 +43,11 @@ create_patches <- function(feature, planning_grid = NULL) {
         dplyr::mutate(patches = paste0("patches_", feature_groups)) %>%
         dplyr::mutate(value = 1) %>%
         tidyr::pivot_wider(names_from = "patches", values_from = "value") %>%
-        sf::st_join(planning_grid %>% dplyr::select(geometry), ., largest = TRUE) %>%
+        sf::st_join(planning_grid %>%
+                      sf::st_drop_geometry() %>%
+                      dplyr::mutate(geometry = sf::st_geometry(planning_grid)) %>%
+                      sf::st_set_geometry(., "geometry") %>%
+                      dplyr::select(geometry), ., largest = TRUE) %>%
         dplyr::select(colnames(.)[grepl("patches", colnames(.))])
     })
   }

@@ -1,4 +1,4 @@
-test_that("create boundary matrix - raster", {
+test_that("convert solution - raster", {
   expect_s4_class(
     # Choose area of interest (Bermuda EEZ)
     {area <- oceandatr::get_area(area_name = "Bermuda")
@@ -24,16 +24,37 @@ test_that("create boundary matrix - raster", {
     patches_df_rast <- create_patch_df(planning_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast)
 
     # Create boundary matrix
-    create_boundary_matrix(planning_grid = planning_rast,
-                           patches = patches_rast,
-                           patch_df = patches_df_rast)
+    bnd_mat_rast <- create_boundary_matrix(planning_grid = planning_rast,
+                                           patches = patches_rast,
+                                           patch_df = patches_df_rast)
 
+    # Create targets
+    targets_rast <- features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)),
+                                     features = features_rast,
+                                     pre_patches = seamounts_rast)
+
+    # Create constraints
+    constraints_rast <- constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
+
+    # Run prioritization
+    p_rast <- suppressWarnings(prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
+      prioritizr::add_min_set_objective() %>%
+      prioritizr::add_manual_targets(constraints_rast) %>%
+      prioritizr::add_binary_decisions() %>%
+      prioritizr::add_boundary_penalties(penalty = 0.000002, data = bnd_mat_rast) %>%
+      prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1))
+
+    # Solve
+    raw_solution <- solve(p_rast)
+
+    # Convert solution into more digestible format
+    convert_solution(raw_solution, patches_df_rast, planning_rast)
     },
-    class = "Matrix")
+    class = "SpatRaster")
 })
 
-test_that("create boundary matrix - sf", {
-  expect_s4_class(
+test_that("create constraints - sf", {
+  expect_s3_class(
     # Choose area of interest (Bermuda EEZ)
     {area <- oceandatr::get_area(area_name = "Bermuda")
     projection <- 'PROJCS["ProjWiz_Custom_Lambert_Azimuthal", GEOGCS["GCS_WGS_1984", DATUM["D_WGS_1984", SPHEROID["WGS_1984",6378137.0,298.257223563]], PRIMEM["Greenwich",0.0], UNIT["Degree",0.0174532925199433]], PROJECTION["Lambert_Azimuthal_Equal_Area"], PARAMETER["False_Easting",0.0], PARAMETER["False_Northing",0.0], PARAMETER["Central_Meridian",-64.5], PARAMETER["Latitude_Of_Origin",32], UNIT["Meter",1.0]]'
@@ -60,9 +81,31 @@ test_that("create boundary matrix - sf", {
     patches_df_square <- create_patch_df(planning_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf)
 
     # Create boundary matrix
-    create_boundary_matrix(planning_grid = planning_sf,
-                           patches = patches_sf,
-                           patch_df = patches_df_square)
+    bnd_mat_square <- create_boundary_matrix(planning_grid = planning_sf,
+                                             patches = patches_sf,
+                                             patch_df = patches_df_square)
+
+    # Create features targets
+    targets_sf <- features_targets(targets = rep(0.2, ncol(features_sf)),
+                                   features = features_sf,
+                                   pre_patches = seamounts_sf)
+
+    # Create constraints
+    constraints_sf <- constraints_targets(feature_targets = targets_sf, patch_df = patches_df_square)
+
+    # Run prioritization
+    p_square <- suppressWarnings(prioritizr::problem(x = patches_df_square, features = constraints_sf$feature, cost_column = "cost") %>%
+      prioritizr::add_min_set_objective() %>%
+      prioritizr::add_manual_targets(constraints_sf) %>%
+      prioritizr::add_binary_decisions() %>%
+      prioritizr::add_boundary_penalties(penalty = 0.000002, data = bnd_mat_square) %>%
+      prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1))
+
+    # Solve
+    raw_solution <- solve(p_square)
+
+    # Convert solution
+    convert_solution(raw_solution, patches_df_square, planning_sf)
     },
-    class = "Matrix")
+    class = "sf")
 })
