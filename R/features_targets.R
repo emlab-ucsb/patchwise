@@ -36,6 +36,12 @@
 
 features_targets <- function(targets, features, pre_patches, locked_out = NULL, locked_in = NULL){
 
+  # Add error for incorrect format of feature
+  if(!check_raster(pre_patches) & !check_sf(pre_patches)) { stop("pre_patches must be a raster or sf object")}
+  if(!check_raster(features) & !check_sf(features)) { stop("features must be a raster or sf object")}
+  if(!check_matching_crs(features, pre_patches)) { stop("features and pre_patches must be of the same crs")}
+  if(!check_matching_type(features, pre_patches)) { stop("features and pre_patches must be of the same object type (all raster or all sf)")}
+
   if(class(features)[1] %in% c("RasterLayer", "SpatRaster")){
     feature_targets_df <- c(features, setNames(pre_patches, "patch")) %>%
       terra::values(.)

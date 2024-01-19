@@ -33,9 +33,12 @@
 
 create_patch_df <- function(planning_grid, features, patches, costs = NULL, locked_out = NULL, locked_in = NULL){
 
-  # Add repeated errors for planning_grid (present in nearly all functions)
-  if(!is.null(planning_grid) & !(class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster", "sf"))) {
-    stop("planning_grid must be a raster or sf object")}
+  # Add error for incorrect format of feature
+  if(!check_raster(planning_grid) & !check_sf(planning_grid)) { stop("planning_grid must be a raster or sf object")}
+  if(!check_raster(patches) & !check_sf(patches)) { stop("patches must be a raster or sf object")}
+  if(!check_raster(features) & !check_sf(features)) { stop("features must be a raster or sf object")}
+  if(!(check_matching_crs(planning_grid, features) | !check_matching_crs(planning_grid, patches))) { stop("planning_grid, features, and patches must be of the same crs")}
+  if(!(check_matching_type(planning_grid, features) | !check_matching_type(planning_grid, patches))) { stop("planning_grid, features, and patches must be of the same object type (all raster or all sf)")}
 
   # Make sure all the features are in the same format
   if(!(identical(class(planning_grid), class(features)) &

@@ -32,6 +32,13 @@
 
 create_boundary_matrix <- function(planning_grid, patches, patch_df){
 
+  # Add error for incorrect format of feature
+  if(!check_raster(planning_grid) & !check_sf(planning_grid)) { stop("planning_grid must be a raster or sf object")}
+  if(!check_raster(patches) & !check_sf(patches)) { stop("patches must be a raster or sf object")}
+  if(!check_df(patch_df)) { stop("patch_df must be a dataframe object")}
+  if(!check_matching_crs(planning_grid, patches)) { stop("planning_grid and patches must be of the same crs")}
+  if(!check_matching_type(planning_grid, patches)) { stop("planning_grid and patches must be of the same object type (all raster or all sf)")}
+
   if(class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster")){
     patch_ids <- patch_df %>%
       dplyr::slice_tail(n = terra::nlyr(patches)) %>%

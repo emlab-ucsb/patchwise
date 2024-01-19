@@ -41,6 +41,13 @@
 #'suggested_protection <- convert_solution(solution = solution, patch_df = patches_raster_df, planning_grid = planning_raster)
 
 convert_solution <- function(solution, patch_df, planning_grid) {
+
+  # Add error for incorrect format of feature
+  if(!check_df(solution)) { stop("solution must be a dataframe")}
+  if(!check_raster(planning_grid) & !check_sf(planning_grid)) { stop("planning_grid must be a raster or sf object")}
+  if(!check_df(patch_df)) { stop("patch_df must be a dataframe object")}
+
+
   planning_unit_id <-  unique(unlist(patch_df$id[which(solution$solution_1 > 0.5)]))
 
   if(class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster")){

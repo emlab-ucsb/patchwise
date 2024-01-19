@@ -35,6 +35,10 @@
 
 constraints_targets <- function(feature_targets, patch_df) {
 
+  # Add error for incorrect format of feature
+  if(!check_df(feature_targets)) { stop("feature_targets must be a dataframe object")}
+  if(!check_df(patch_df)) { stop("patch_df must be a dataframe object")}
+
   constraints_number <- length(grep("constraint", names(patch_df)))
 
   feature_data_w_constraints <- tibble::tibble(id = seq(from = nrow(feature_targets)+1, to = (nrow(feature_targets) + constraints_number), by = 1), total = 2) %>%

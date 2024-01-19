@@ -28,8 +28,7 @@
 create_patches <- function(feature, planning_grid = NULL) {
 
   # Add error for incorrect format of feature
-  if(!is.null(feature) & !(class(feature)[1] %in% c("RasterLayer", "SpatRaster", "sf"))) {
-    stop("feature must be a raster or sf object")}
+  if(!check_raster(feature) & !check_sf(feature)) { stop("feature must be a raster or sf object")}
 
   if(class(feature)[1] %in% c("RasterLayer", "SpatRaster")) {
     feature <- feature %>%
