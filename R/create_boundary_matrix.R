@@ -26,9 +26,11 @@
 #'# Create patches from layer
 #'patches_raster <- create_patches(seamounts_raster)
 #'# Create patch dataframe
-#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
+#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster,
+#'   patches = patches_raster, costs = cost_raster)
 #'# Create boundary matrix for prioritizr
-#'boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster, patch_df = patches_raster_df)
+#'boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster,
+#'   patches = patches_raster, patch_df = patches_raster_df)
 
 create_boundary_matrix <- function(planning_grid, patches, patch_df){
 

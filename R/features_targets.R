@@ -24,15 +24,18 @@
 #'seamounts_raster <- features_raster[["seamounts"]]
 #'features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
 #'# Create a "cost" to protecting a cell - just a uniform cost for this example
-#'cost_raster <- setNames(planning_raster, "cost")
+#'cost_raster <- stats::setNames(planning_raster, "cost")
 #'# Create patches from layer
 #'patches_raster <- create_patches(seamounts_raster)
 #'# Create patch dataframe
-#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
+#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster,
+#'   patches = patches_raster, costs = cost_raster)
 #'# Create boundary matrix for prioritizr
-#'boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster, patch_df = patches_raster_df)
+#'boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster,
+#'   patch_df = patches_raster_df)
 #'# Create target features - using just 20% for every feature
-#'features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1), features = features_raster, pre_patches = seamounts_raster)
+#'features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1),
+#'   features = features_raster, pre_patches = seamounts_raster)
 
 features_targets <- function(targets, features, pre_patches, locked_out = NULL, locked_in = NULL){
 
@@ -43,7 +46,7 @@ features_targets <- function(targets, features, pre_patches, locked_out = NULL, 
   if(!check_matching_type(features, pre_patches)) { stop("features and pre_patches must be of the same object type (all raster or all sf)")}
 
   if(class(features)[1] %in% c("RasterLayer", "SpatRaster")){
-    feature_targets_df <- c(features, setNames(pre_patches, "patch")) %>%
+    feature_targets_df <- c(features, stats::setNames(pre_patches, "patch")) %>%
       terra::values(.)
     } else {
       feature_targets_df <- features %>%
@@ -66,8 +69,8 @@ features_targets <- function(targets, features, pre_patches, locked_out = NULL, 
                       total = ifelse(class(locked_out)[1] %in% c("RasterLayer", "SpatRaster"),
                                      sum(terra::values(locked_out), na.rm = TRUE),
                                      sum((locked_out %>% sf::st_drop_geometry())[,1], na.rm = TRUE)),
-                      relative_target = NA_real_,
-                      absolute_target = 0.5))
+                      relative_target = 0,
+                      absolute_target = 0))
    }
 
    if(!is.null(locked_in)) {
@@ -78,7 +81,7 @@ features_targets <- function(targets, features, pre_patches, locked_out = NULL, 
                                          sum(terra::values(locked_in), na.rm = TRUE),
                                          sum((locked_in %>% sf::st_drop_geometry())[,1], na.rm = TRUE)),
                                        relative_target = 1) %>%
-                          dplyr::mutate(absolute_target = total))
+                          dplyr::mutate(absolute_target = total*relative_target))
    }
 
   return(feature_targets_df)

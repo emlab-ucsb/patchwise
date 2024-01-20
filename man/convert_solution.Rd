@@ -32,21 +32,32 @@ features_raster <- oceandatr::get_features(planning_grid = planning_raster)
 seamounts_raster <- features_raster[["seamounts"]]
 features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
 # Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_raster <- setNames(planning_raster, "cost")
+cost_raster <- stats::setNames(planning_raster, "cost")
 # Create patches from layer
 patches_raster <- create_patches(seamounts_raster)
 # Create patch dataframe
-patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
+patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster,
+  patches = patches_raster, costs = cost_raster)
 # Create boundary matrix for prioritizr
-boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster, patch_df = patches_raster_df)
+boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster,
+  patch_df = patches_raster_df)
 # Create target features - using just 20\% for every feature
-features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1), features = features_raster, pre_patches = seamounts_raster)
+features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1),
+  features = features_raster, pre_patches = seamounts_raster)
 # Create constraint targets
-constraint_targets <- constraints_targets(feature_targets = features_targets, patch_df = patches_raster_df)
+constraint_targets <- constraints_targets(feature_targets = features_targets,
+  patch_df = patches_raster_df)
 # Create prioritization problem
-problem_raster <- prioritizr::problem(x = patches_raster_df, features = constraint_targets$feature, cost_column = "cost") \%>\% prioritizr::add_min_set_objective() \%>\% prioritizr::add_manual_targets(constraint_targets) \%>\% prioritizr::add_binary_decisions() \%>\% prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix) \%>\% prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+problem_raster <- prioritizr::problem(x = patches_raster_df,
+  features = constraint_targets$feature, cost_column = "cost") \%>\%
+  prioritizr::add_min_set_objective() \%>\%
+  prioritizr::add_manual_targets(constraint_targets) \%>\%
+  prioritizr::add_binary_decisions() \%>\%
+  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix) \%>\%
+  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
 # Solve problem
 solution <- solve(problem_raster)
 # Convert to a more digestible format
-suggested_protection <- convert_solution(solution = solution, patch_df = patches_raster_df, planning_grid = planning_raster)
+suggested_protection <- convert_solution(solution = solution, patch_df = patches_raster_df,
+  planning_grid = planning_raster)
 }

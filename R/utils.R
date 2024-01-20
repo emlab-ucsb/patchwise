@@ -2,7 +2,7 @@
 
 #' Check if data is a raster
 #'
-#' @param dat
+#' @param dat object
 #'
 #' @return `logical` TRUE if raster, else FALSE
 #' @noRd
@@ -12,9 +12,9 @@ check_raster <- function(dat){
 
 #' Check if data is sf
 #'
-#' @param dat
+#' @param dat object
 #'
-#' @return TRUE if sf, else FALSE
+#' @return `logical` TRUE if sf, else FALSE
 #' @noRd
 check_sf <- function(dat){
   class(dat)[1] == "sf"
@@ -22,9 +22,9 @@ check_sf <- function(dat){
 
 #' Check if data is df
 #'
-#' @param dat
+#' @param dat object
 #'
-#' @return TRUE if df, else FALSE
+#' @return `logical` TRUE if df, else FALSE
 #' @noRd
 check_df <- function(dat){
   is.data.frame(dat)
@@ -32,8 +32,8 @@ check_df <- function(dat){
 
 #' Check if the inputs have the same crs
 #'
-#' @param object1
-#' @param object2
+#' @param object1 first object
+#' @param object2 second object
 #'
 #' @return `logical` TRUE crs' match, FALSE if they don't
 #' @noRd
@@ -43,10 +43,10 @@ check_matching_crs <- function(object1, object2){
 
 #' Check if the inputs have the same type
 #'
-#' @param object1
-#' @param object2
+#' @param object1 first object
+#' @param object2 second object
 #'
-#' @return `logical` TRUE crs' match, FALSE if they don't
+#' @return `logical` TRUE types match, FALSE if they don't
 #' @noRd
 check_matching_type <- function(object1, object2){
   class(object1)[1] == class(object2)[1]

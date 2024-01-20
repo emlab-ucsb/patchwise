@@ -25,11 +25,12 @@
 #'seamounts_raster <- features_raster[["seamounts"]]
 #'features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
 #'# Create a "cost" to protecting a cell - just a uniform cost for this example
-#'cost_raster <- setNames(planning_raster, "cost")
+#'cost_raster <- stats::setNames(planning_raster, "cost")
 #'# Create patches from layer
 #'patches_raster <- create_patches(seamounts_raster)
 #'# Create patch dataframe
-#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
+#'patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster,
+#'   patches = patches_raster, costs = cost_raster)
 
 create_patch_df <- function(planning_grid, features, patches, costs = NULL, locked_out = NULL, locked_in = NULL){
 
@@ -39,12 +40,6 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
   if(!check_raster(features) & !check_sf(features)) { stop("features must be a raster or sf object")}
   if(!(check_matching_crs(planning_grid, features) | !check_matching_crs(planning_grid, patches))) { stop("planning_grid, features, and patches must be of the same crs")}
   if(!(check_matching_type(planning_grid, features) | !check_matching_type(planning_grid, patches))) { stop("planning_grid, features, and patches must be of the same object type (all raster or all sf)")}
-
-  # Make sure all the features are in the same format
-  if(!(identical(class(planning_grid), class(features)) &
-       identical(class(features), class(patches)))) {
-    stop("features, patches, costs, locked out, and locked in objects must be of the same class")
-  }
 
   # Find which optional objects were supplied, an make sure they are in the right format
   supplied <- NULL
@@ -56,6 +51,9 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
         }
       }
   }
+
+  if("locked_in" %in% supplied) { names(locked_in)[1] <- "locked_in" }
+  if("locked_out" %in% supplied) { names(locked_out)[1] <- "locked_out" }
 
   if (class(planning_grid)[1] %in% c("RasterLayer", "SpatRaster")) {
     # Initialize
@@ -77,7 +75,7 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
           id = list(as.numeric(row.names(terra::as.data.frame(patches[[i]], na.rm = FALSE))[which(terra::as.data.frame(patches[[i]], na.rm = FALSE) > 0.5)]))) %>%
        dplyr::bind_cols(
           terra::as.data.frame(features * patches[[i]], na.rm = FALSE) %>%
-            setNames(names(features)) %>%
+            stats::setNames(names(features)) %>%
             dplyr::summarize_all(sum, na.rm = TRUE)
         )
 
@@ -94,7 +92,7 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
           curr_sm_pu <- curr_sm_pu %>%
             dplyr::bind_cols(
               terra::as.data.frame(get(options) * patches[[i]], na.rm = FALSE) %>%
-                setNames(names(get(options))) %>%
+                stats::setNames(names(get(options))) %>%
                 dplyr::summarize_all(sum, na.rm=TRUE))
           }
         }
@@ -111,11 +109,11 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
 
     if("locked_out" %in% supplied) {
       pu_sm_data <- pu_sm_data %>%
-        dplyr::relocate(locked_out, .after = last_col())
+        dplyr::relocate(locked_out, .after = tidyselect::last_col())
     }
     if("locked_in" %in% supplied) {
       pu_sm_data <- pu_sm_data %>%
-        dplyr::relocate(locked_in, .after = last_col())
+        dplyr::relocate(locked_in, .after = tidyselect::last_col())
     }
 
   } else {
@@ -168,11 +166,11 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
 
     if("locked_out" %in% supplied) {
       pu_sm_data <- pu_sm_data %>%
-        dplyr::relocate(locked_out, .after = last_col())
+        dplyr::relocate(locked_out, .after = tidyselect::last_col())
     }
     if("locked_in" %in% supplied) {
       pu_sm_data <- pu_sm_data %>%
-        dplyr::relocate(locked_in, .after = last_col())
+        dplyr::relocate(locked_in, .after = tidyselect::last_col())
     }
   }
 
@@ -203,7 +201,7 @@ create_patch_df <- function(planning_grid, features, patches, costs = NULL, lock
   constraints <- constraints[, -1] # remove dummy row
 
   pu_data_final <- constraints %>%
-    setNames(sprintf("constraint_%d", seq.int(1:ncol(.)))) %>%
+    stats::setNames(sprintf("constraint_%d", seq.int(1:ncol(.)))) %>%
     dplyr::bind_cols(pu_data, .)
 
   return(pu_data_final)

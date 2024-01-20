@@ -1,20 +1,29 @@
 Package: patchwise
 Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Echelle", "Burns", , "echelle_burns@ucsb.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3902-1410"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Description: Allows for the selection of entire feature groups (features that touch) for protection via prioritizr, as opposed to the selection of individual cells across different feature groups.
+License: GPL (>= 3)
 Encoding: UTF-8
 Imports: 
     sf,
     dplyr,
     tidyr,
-    magrittr
+    magrittr,
+    terra,
+    tibble, 
+    stats, 
+    methods
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests: 
-    testthat (>= 3.0.0)
+    knitr, 
+    rmarkdown, 
+    codetools,
+    testthat (>= 3.0.0),
+    oceandatr,
+    prioritizr
 Config/testthat/edition: 3
+VignetteBuilder: knitr

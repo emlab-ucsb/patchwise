@@ -34,11 +34,15 @@ cost_raster <- setNames(planning_raster, "cost")
 # Create patches from layer
 patches_raster <- create_patches(seamounts_raster)
 # Create patch dataframe
-patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster, patches = patches_raster, costs = cost_raster)
+patches_raster_df <- create_patch_df(planning_grid = planning_raster, features = features_raster,
+  patches = patches_raster, costs = cost_raster)
 # Create boundary matrix for prioritizr
-boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster, patches = patches_raster, patch_df = patches_raster_df)
+boundary_matrix <- create_boundary_matrix(planning_grid = planning_raster,
+  patches = patches_raster, patch_df = patches_raster_df)
 # Create target features - using just 20\% for every feature
-features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1), features = features_raster, pre_patches = seamounts_raster)
+features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1),
+  features = features_raster, pre_patches = seamounts_raster)
 # Create constraint targets
-constraint_targets <- constraints_targets(feature_targets = features_targets, patch_df = patches_raster_df)
+constraint_targets <- constraints_targets(feature_targets = features_targets,
+  patch_df = patches_raster_df)
 }

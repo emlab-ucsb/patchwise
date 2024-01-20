@@ -46,8 +46,8 @@ create_patches <- function(feature, planning_grid = NULL) {
       dplyr::filter(value == 1)
 
     feature_matrix <- sf::st_touches(feature, sparse = F)
-    hc <- hclust(as.dist(!feature_matrix), method = "single")
-    feature_groups <- cutree(hc, h = 0.5)
+    hc <- stats::hclust(as.dist(!feature_matrix), method = "single")
+    feature_groups <- stats::cutree(hc, h = 0.5)
 
     suppressWarnings({
       feature <- feature %>%
