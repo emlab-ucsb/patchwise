@@ -29,6 +29,7 @@ Since this package is intended to be used in combination with `oceandatr`, there
 ```
 # Load libraries
 library(tidyverse)
+library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda")
@@ -122,6 +123,7 @@ Since this package is intended to be used in combination with `oceandatr`, there
 ```
 # Load libraries
 library(tidyverse)
+library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda")
