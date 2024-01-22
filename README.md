@@ -27,6 +27,9 @@ For our examples, we use the prioritization optimizer `gurobi`, which can be fou
 Since this package is intended to be used in combination with `oceandatr`, there are several housekeeping steps that need to be completed first. 
 
 ```
+# Load libraries
+library(tidyverse)
+
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda")
 projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
@@ -117,6 +120,9 @@ Only portions of seamount units are protected here.
 Since this package is intended to be used in combination with `oceandatr`, there are several housekeeping steps that need to be completed first. 
 
 ```
+# Load libraries
+library(tidyverse)
+
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda")
 projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
