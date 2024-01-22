@@ -19,10 +19,6 @@ knitr::opts_chunk$set(
 	collapse = TRUE,
 	comment = "#>"
 )
-
-# Load libraries
-library(tidyverse)
-library(patchwise)
 ```
 
 Prioritizations can be run using "locked-in" areas (areas that are already represented by existing protected areas) and "locked-out" areas (areas that are not available for protection). `patchwise` has the capability to include these areas while also creating the patches that should be protected as a single feature. For more information on locked-in and locked-out areas, refer to the [`prioritizr` documentation](https://prioritizr.net/).
@@ -48,6 +44,10 @@ Here are some quick links to hop to different sections that you might find relev
 To generate our data for this example, we will use data from Bermuda generated via `oceandatr`. 
 
 ```{r}
+# Load libraries
+library(tidyverse)
+library(patchwise)
+
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda")
 projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
@@ -250,6 +250,10 @@ It looks like we got the results we wanted - the locked-in areas were included i
 To generate our data for this example, we will use data from Bermuda generated via `oceandatr`. 
 
 ```{r include=FALSE}
+# Load libraries
+library(tidyverse)
+library(patchwise)
+
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda")
 projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
