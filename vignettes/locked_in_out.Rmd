@@ -20,6 +20,8 @@ knitr::opts_chunk$set(
 	comment = "#>"
 )
 
+# Load libraries
+library(tidyverse)
 library(patchwise)
 ```
 
