@@ -10,6 +10,7 @@
 #' @param locked_in a raster or sf object for areas to be locked in (absolutely protected) in the prioritization
 #'
 #' @return A data frame to be used as an input for `create_boundary_matrix()`
+#' @importFrom rlang :=
 #' @export
 #'
 #' @examples

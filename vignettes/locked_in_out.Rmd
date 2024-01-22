@@ -57,7 +57,7 @@ planning_rast <- oceandatr::get_planning_grid(area, projection = projection)
 features_rast <- oceandatr::get_features(planning_grid = planning_rast)
 
 # Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_rast <- setNames(planning_rast, "cost")
+cost_rast <- stats::setNames(planning_rast, "cost")
 
 # Separate seamount data - we want to protect entire patches
 seamounts_rast <- features_rast[["seamounts"]]

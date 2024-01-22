@@ -18,7 +18,7 @@ test_that("create constraints - raster", {
     patches_rast <- create_patches(seamounts_rast)
 
     # Create a "cost" to protecting a cell - just a uniform cost for this example
-    cost_rast <- setNames(planning_rast, "cost")
+    cost_rast <- stats::setNames(planning_rast, "cost")
 
     # Create patches dataframe - this creates several constraints so that entire seamount units are protected together
     patches_df_rast <- create_patch_df(planning_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast)

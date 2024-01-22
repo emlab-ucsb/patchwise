@@ -21,7 +21,7 @@
 #'seamounts_raster <- features_raster[["seamounts"]]
 #'features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
 #'# Create a "cost" to protecting a cell - just a uniform cost for this example
-#'cost_raster <- setNames(planning_raster, "cost")
+#'cost_raster <- stats::setNames(planning_raster, "cost")
 #'# Create patches from layer
 #'patches_raster <- create_patches(seamounts_raster)
 
@@ -32,10 +32,10 @@ create_patches <- function(feature, planning_grid = NULL) {
 
   if(class(feature)[1] %in% c("RasterLayer", "SpatRaster")) {
     feature <- feature %>%
-      as("SpatRaster") %>%
+      methods::as("SpatRaster") %>%
       terra::patches() %>%
       terra::segregate(other = NA) %>%
-      setNames(paste0("patches_", seq_len(terra::nlyr(.))))
+      stats::setNames(paste0("patches_", seq_len(terra::nlyr(.))))
   } else {
 
     if(is.null(planning_grid)) {
@@ -46,7 +46,7 @@ create_patches <- function(feature, planning_grid = NULL) {
       dplyr::filter(value == 1)
 
     feature_matrix <- sf::st_touches(feature, sparse = F)
-    hc <- stats::hclust(as.dist(!feature_matrix), method = "single")
+    hc <- stats::hclust(stats::as.dist(!feature_matrix), method = "single")
     feature_groups <- stats::cutree(hc, h = 0.5)
 
     suppressWarnings({

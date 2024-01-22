@@ -32,7 +32,7 @@ features_raster <- oceandatr::get_features(planning_grid = planning_raster)
 seamounts_raster <- features_raster[["seamounts"]]
 features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
 # Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_raster <- setNames(planning_raster, "cost")
+cost_raster <- stats::setNames(planning_raster, "cost")
 # Create patches from layer
 patches_raster <- create_patches(seamounts_raster)
 # Create patch dataframe
