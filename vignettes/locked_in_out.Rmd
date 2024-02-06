@@ -45,7 +45,6 @@ To generate our data for this example, we will use data from Bermuda generated v
 
 ```{r}
 # Load libraries
-library(tidyverse)
 library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
@@ -251,7 +250,6 @@ To generate our data for this example, we will use data from Bermuda generated v
 
 ```{r include=FALSE}
 # Load libraries
-library(tidyverse)
 library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
