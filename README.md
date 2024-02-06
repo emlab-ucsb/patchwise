@@ -29,7 +29,6 @@ Since this package is intended to be used in combination with `oceandatr`, there
 
 ```
 # Load libraries
-library(tidyverse)
 library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
@@ -123,7 +122,6 @@ Since this package is intended to be used in combination with `oceandatr`, there
 
 ```
 # Load libraries
-library(tidyverse)
 library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
