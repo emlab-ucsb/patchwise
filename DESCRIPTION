@@ -1,5 +1,5 @@
 Package: patchwise
-Title: What the Package Does (One Line, Title Case)
+Title: Create Patches of Feature Groups for Use in Spatial Prioritizations
 Version: 0.1.0
 Authors@R: 
     person("Echelle", "Burns", , "echelle_burns@ucsb.edu", role = c("aut", "cre"),
@@ -19,6 +19,9 @@ Imports:
     tidyselect, 
     rlang
 Roxygen: list(markdown = TRUE)
+Remotes: 
+  github::emlab-ucsb/spatialgridr
+  github::emlab-ucsb/oceandatr
 RoxygenNote: 7.3.1
 Suggests: 
     knitr, 
