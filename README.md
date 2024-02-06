@@ -1,6 +1,6 @@
 # patchwise
 
-`patchwise` is intended to be used as a supplementary package to `oceandatr` for instances in which users wish to protect entire "chunks" of areas using `prioritizr`. 
+`patchwise` is intended to be used as a supplementary package to `oceandatr` (and `spatialgridr`) for instances in which users wish to protect entire "chunks" of areas using `prioritizr`. 
 One example is when a user wishes to include seamounts as a feature to protect in `prioritizr` with a target of 20% protection. Instead of protecting a little bit of each seamount until the 20% is reached, `patchwise` makes it easy to ensure that entire seamounts are protected sequentially to meet the protection target.
 
 ## Installation
@@ -11,11 +11,12 @@ if (!require(devtools)) install.packages("devtools")
 devtools::install_github("emlab-ucsb/patchwise")
 ```
 
-You can install `oceandatr` from GitHub with: 
+You can install `oceandatr` and `spatialgridr` from GitHub with: 
 
 ```
 if (!require(devtools)) install.packages("devtools")
 devtools::install_github("emlab-ucsb/oceandatr")
+devtools::install_github("emlab-ucsb/spatialgridr")
 ```
 
 For our examples, we use the prioritization optimizer `gurobi`, which can be found [here](https://www.gurobi.com/solutions/gurobi-optimizer/?campaignid=193283256&adgroupid=138872523240&creative=596136082788&keyword=gurobi%20optimization&matchtype=e&gclid=CjwKCAjwtuOlBhBREiwA7agf1oUW5qsO9aXGpfbjy04XRAw0DRpVGdSlrnEYRyC2q-B9EafXdArQUhoCDxQQAvD_BwE). Gurobi must be installed on your device and the `gurobi` R package must also be installed in R before you can run `prioritizr`.
