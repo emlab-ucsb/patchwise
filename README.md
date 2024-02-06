@@ -32,14 +32,14 @@ library(tidyverse)
 library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda")
+area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
 projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
 
 # Create a planning grid
-planning_rast <- oceandatr::get_planning_grid(area, projection = projection)
+planning_rast <- spatialgridr::get_grid(area, projection = projection)
 
 # Grab all relevant data
-features_rast <- oceandatr::get_features(planning_grid = planning_rast)
+features_rast <- oceandatr::get_features(spatial_grid = planning_rast)
 
 # Create a "cost" to protecting a cell - just a uniform cost for this example
 cost_rast <- stats::setNames(planning_rast, "cost")
@@ -59,10 +59,10 @@ terra::plot(seamounts_rast) # there are 7 seamount areas (seamounts that are tou
 patches_rast <- patchwise::create_patches(seamounts_rast)
 
 # Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(planning_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast)
+patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast)
 
 # Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(planning_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
+boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
 
 # Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
 targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast)
@@ -82,7 +82,7 @@ problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_
 solution_rast <- solve(problem_rast)
 
 # Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, planning_grid = planning_rast)
+result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
 
 # Show the results
 terra::plot(result_rast)
@@ -95,7 +95,7 @@ Areas in green were identified by `prioritizr` as areas worth protecting. We can
 
 ```
 # Grab all relevant data
-features_rast_nopatch <- oceandatr::get_features(planning_grid = planning_rast)
+features_rast_nopatch <- oceandatr::get_features(spatial_grid = planning_rast)
 
 # Run the prioritization
 problem_rast_nopatch <- prioritizr::problem(x = cost_rast, features = features_rast_nopatch) %>%
@@ -126,14 +126,14 @@ library(tidyverse)
 library(patchwise)
 
 # Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda")
+area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
 projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
 
 # Create a planning grid
-planning_sf <- oceandatr::get_planning_grid(area, projection = projection, option = "sf_square")
+planning_sf <- spatialgridr::get_grid(area, projection = projection, option = "sf_square")
 
 # Grab all relevant data
-features_sf <- oceandatr::get_features(planning_grid = planning_sf)
+features_sf <- oceandatr::get_features(spatial_grid = planning_sf)
 
 # Create a "cost" to protecting a cell - just a uniform cost for this example
 cost_sf <- features_sf %>%
@@ -155,13 +155,13 @@ plot(seamounts_sf, border = F) # there are 7 seamount areas (seamounts that are 
 
 ```
 # Create seamount patches - seamount areas that touch are considered the same patch
-patches_sf <- patchwise::create_patches(seamounts_sf, planning_grid = planning_sf)
+patches_sf <- patchwise::create_patches(seamounts_sf, spatial_grid = planning_sf)
 
 # Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(planning_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf)
+patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf)
 
 # Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(planning_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
+boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
 
 # Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
 targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf)
@@ -181,7 +181,7 @@ problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$f
 solution_sf <- solve(problem_sf)
 
 # Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, planning_grid = planning_sf)
+result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
 
 # Show the results
 plot(result_sf, border = F)
@@ -193,7 +193,7 @@ Areas in yellow were identified by `prioritizr` as areas worth protecting. We ca
 
 ```
 # Grab all relevant data
-features_sf_nopatch <- oceandatr::get_features(planning_grid = planning_sf) %>% 
+features_sf_nopatch <- oceandatr::get_features(spatial_grid = planning_sf) %>% 
   dplyr::mutate(cost = 1) %>% # create a cost column
   dplyr::relocate(cost, .before = x) # make sure cost column is before geometry column
 
