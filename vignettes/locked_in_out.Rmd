@@ -146,7 +146,7 @@ problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_
   prioritizr::add_manual_targets(constraints_rast) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_rast <- solve(problem_rast)
@@ -193,7 +193,7 @@ problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_
   prioritizr::add_manual_targets(constraints_rast) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_rast <- solve(problem_rast)
@@ -230,7 +230,7 @@ problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_
   prioritizr::add_manual_targets(constraints_rast) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_rast <- solve(problem_rast)
@@ -309,7 +309,7 @@ problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$f
   prioritizr::add_manual_targets(constraints_sf) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_sf <- solve(problem_sf)
@@ -357,7 +357,7 @@ problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$f
   prioritizr::add_manual_targets(constraints_sf) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_sf <- solve(problem_sf)
@@ -393,7 +393,7 @@ problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$f
   prioritizr::add_manual_targets(constraints_sf) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_sf <- solve(problem_sf)

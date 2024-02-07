@@ -19,7 +19,14 @@ devtools::install_github("emlab-ucsb/oceandatr")
 devtools::install_github("emlab-ucsb/spatialgridr")
 ```
 
-For our examples, we use the prioritization optimizer `gurobi`, which can be found [here](https://www.gurobi.com/solutions/gurobi-optimizer/?campaignid=193283256&adgroupid=138872523240&creative=596136082788&keyword=gurobi%20optimization&matchtype=e&gclid=CjwKCAjwtuOlBhBREiwA7agf1oUW5qsO9aXGpfbjy04XRAw0DRpVGdSlrnEYRyC2q-B9EafXdArQUhoCDxQQAvD_BwE). Gurobi must be installed on your device and the `gurobi` R package must also be installed in R before you can run `prioritizr`.
+For our examples, we use the prioritization optimizer `lpsymphony`. The `lpsymphony` R package must be installed in R before you can run `prioritizr`.
+
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("lpsymphony")
+```
 
 ## Examples of usage
 
@@ -76,7 +83,7 @@ problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_
   prioritizr::add_manual_targets(constraints_rast) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_rast <- solve(problem_rast)
@@ -103,7 +110,7 @@ problem_rast_nopatch <- prioritizr::problem(x = cost_rast, features = features_r
   prioritizr::add_relative_targets(rep(0.2, terra::nlyr(features_rast_nopatch))) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_nopatch <- solve(problem_rast_nopatch)
@@ -174,7 +181,7 @@ problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$f
   prioritizr::add_manual_targets(constraints_sf) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_sf <- solve(problem_sf)
@@ -202,7 +209,7 @@ problem_sf_nopatch <- prioritizr::problem(x = features_sf_nopatch, features = na
   prioritizr::add_relative_targets(rep(0.2, ncol(features_sf_nopatch)-1)) %>%
   prioritizr::add_binary_decisions() %>%
   prioritizr::add_boundary_penalties(penalty = 0.000002) %>%
-  prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+  prioritizr::add_lpsymphony_solver()
 
 # Solve the prioritization
 solution_sf_nopatch <- solve(problem_sf_nopatch)
