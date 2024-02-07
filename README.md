@@ -1,4 +1,4 @@
-# patchwise
+# patchwise <a href="https://emlab-ucsb.github.io/patchwise/"><img src="man/figures/logo.png" align="right" height="139" alt="patchwise website" /></a>
 
 `patchwise` is intended to be used as a supplementary package to `oceandatr` (and `spatialgridr`) for instances in which users wish to protect entire "chunks" of areas using `prioritizr`. 
 One example is when a user wishes to include seamounts as a feature to protect in `prioritizr` with a target of 20% protection. Instead of protecting a little bit of each seamount until the 20% is reached, `patchwise` makes it easy to ensure that entire seamounts are protected sequentially to meet the protection target.
