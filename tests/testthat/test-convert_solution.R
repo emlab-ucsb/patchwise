@@ -42,7 +42,7 @@ test_that("convert solution - raster", {
       prioritizr::add_manual_targets(constraints_rast) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_boundary_penalties(penalty = 0.000002, data = bnd_mat_rast) %>%
-      prioritizr::add_lpsymphony_solver())
+      prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1))
 
     # Solve
     raw_solution <- solve(p_rast)
@@ -99,7 +99,7 @@ test_that("create constraints - sf", {
       prioritizr::add_manual_targets(constraints_sf) %>%
       prioritizr::add_binary_decisions() %>%
       prioritizr::add_boundary_penalties(penalty = 0.000002, data = bnd_mat_square) %>%
-      prioritizr::add_lpsymphony_solver())
+      prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1))
 
     # Solve
     raw_solution <- solve(p_square)

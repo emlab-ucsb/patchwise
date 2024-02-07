@@ -21,8 +21,7 @@ Imports:
 Roxygen: list(markdown = TRUE)
 Remotes: 
     github::emlab-ucsb/spatialgridr,
-    github::emlab-ucsb/oceandatr,
-    bioc::lpsymphony
+    github::emlab-ucsb/oceandatr
 RoxygenNote: 7.3.1
 Suggests: 
     knitr, 
@@ -31,8 +30,7 @@ Suggests:
     testthat (>= 3.0.0),
     oceandatr,
     spatialgridr,
-    prioritizr, 
-    lpsymphony
+    prioritizr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://emlab-ucsb.github.io/patchwise/
