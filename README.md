@@ -52,7 +52,7 @@ features_rast <- features_rast[[names(features_rast)[names(features_rast) != "se
 terra::plot(seamounts_rast) # there are 7 seamount areas (seamounts that are touching)
 ```
 
-![image](https://github.com/echelleburns/patchwise/assets/40546424/7e717d95-4673-4dac-8f59-dbb4865398ea)
+![](https://github.com/echelleburns/patchwise/assets/40546424/7e717d95-4673-4dac-8f59-dbb4865398ea)
 
 ```
 # Create seamount patches - seamount areas that touch are considered the same patch
@@ -88,7 +88,7 @@ result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = 
 terra::plot(result_rast)
 ```
 
-![image](https://github.com/emlab-ucsb/patchwise/assets/40546424/82d88030-e915-4fde-a3ec-a99b62ff596d)
+![](https://github.com/emlab-ucsb/patchwise/assets/40546424/82d88030-e915-4fde-a3ec-a99b62ff596d)
 
 
 Areas in green were identified by `prioritizr` as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a `prioritizr` run that does not protect whole seamounts: 
@@ -112,7 +112,7 @@ solution_nopatch <- solve(problem_rast_nopatch)
 terra::plot(solution_nopatch)
 ```
 
-![image](https://github.com/emlab-ucsb/patchwise/assets/40546424/0d27f6df-32e4-49ff-abbc-720b930c26d4)
+![](https://github.com/emlab-ucsb/patchwise/assets/40546424/0d27f6df-32e4-49ff-abbc-720b930c26d4)
 
 Only portions of seamount units are protected here.
 
@@ -150,7 +150,7 @@ features_sf <- features_sf %>%
 plot(seamounts_sf, border = F) # there are 7 seamount areas (seamounts that are touching)
 ```
 
-![image](https://github.com/emlab-ucsb/patchwise/assets/40546424/892e0ee5-6791-4fb7-acac-6e3fcb8718b0)
+![](https://github.com/emlab-ucsb/patchwise/assets/40546424/892e0ee5-6791-4fb7-acac-6e3fcb8718b0)
 
 ```
 # Create seamount patches - seamount areas that touch are considered the same patch
@@ -186,7 +186,7 @@ result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patc
 plot(result_sf, border = F)
 ```
 
-![image](https://github.com/emlab-ucsb/patchwise/assets/40546424/4fe72641-1693-43f5-a317-b86d30e7c54c)
+![](https://github.com/emlab-ucsb/patchwise/assets/40546424/4fe72641-1693-43f5-a317-b86d30e7c54c)
 
 Areas in yellow were identified by `prioritizr` as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a `prioritizr` run that does not protect whole seamounts: 
 
@@ -211,6 +211,6 @@ solution_sf_nopatch <- solve(problem_sf_nopatch)
 plot(solution_sf_nopatch %>% dplyr::select(solution_1), border = F)
 ```
 
-![image](https://github.com/emlab-ucsb/patchwise/assets/40546424/a4fee456-4206-4668-bd61-76e22b8b0222)
+![](https://github.com/emlab-ucsb/patchwise/assets/40546424/a4fee456-4206-4668-bd61-76e22b8b0222)
 
 Only portions of seamount units are protected here.

@@ -65,7 +65,8 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header">
-<img src="logo.png" class="logo" alt=""><h1 id="patchwise">patchwise<a class="anchor" aria-label="anchor" href="#patchwise"></a>
+<img src="logo.png" class="logo" alt=""><h1 id="patchwise-">patchwise 
+<a class="anchor" aria-label="anchor" href="#patchwise-"></a>
 </h1>
 </div>
 <p><code>patchwise</code> is intended to be used as a supplementary package to <code>oceandatr</code> (and <code>spatialgridr</code>) for instances in which users wish to protect entire “chunks” of areas using <code>prioritizr</code>. One example is when a user wishes to include seamounts as a feature to protect in <code>prioritizr</code> with a target of 20% protection. Instead of protecting a little bit of each seamount until the 20% is reached, <code>patchwise</code> makes it easy to ensure that entire seamounts are protected sequentially to meet the protection target.</p>
@@ -110,9 +111,7 @@
 <span></span>
 <span><span class="co"># Show what seamounts look like... </span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">seamounts_rast</span><span class="op">)</span> <span class="co"># there are 7 seamount areas (seamounts that are touching)</span></span></code></pre>
-<div class="float">
-<img src="https://github.com/echelleburns/patchwise/assets/40546424/7e717d95-4673-4dac-8f59-dbb4865398ea" alt="image"><div class="figcaption">image</div>
-</div>
+<p><img src="https://github.com/echelleburns/patchwise/assets/40546424/7e717d95-4673-4dac-8f59-dbb4865398ea"></p>
 <pre><code><span><span class="co"># Create seamount patches - seamount areas that touch are considered the same patch</span></span>
 <span><span class="va">patches_rast</span> <span class="op">&lt;-</span> <span class="fu">patchwise</span><span class="fu">::</span><span class="fu"><a href="reference/create_patches.html">create_patches</a></span><span class="op">(</span><span class="va">seamounts_rast</span><span class="op">)</span></span>
 <span></span>
@@ -144,9 +143,7 @@
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre>
-<div class="float">
-<img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/82d88030-e915-4fde-a3ec-a99b62ff596d" alt="image"><div class="figcaption">image</div>
-</div>
+<p><img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/82d88030-e915-4fde-a3ec-a99b62ff596d"></p>
 <p>Areas in green were identified by <code>prioritizr</code> as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a <code>prioritizr</code> run that does not protect whole seamounts:</p>
 <pre><code><span><span class="co"># Grab all relevant data</span></span>
 <span><span class="va">features_rast_nopatch</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/oceandatr/man/get_features.html" class="external-link">get_features</a></span><span class="op">(</span>spatial_grid <span class="op">=</span> <span class="va">planning_rast</span><span class="op">)</span></span>
@@ -164,9 +161,7 @@
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">solution_nopatch</span><span class="op">)</span></span></code></pre>
-<div class="float">
-<img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/0d27f6df-32e4-49ff-abbc-720b930c26d4" alt="image"><div class="figcaption">image</div>
-</div>
+<p><img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/0d27f6df-32e4-49ff-abbc-720b930c26d4"></p>
 <p>Only portions of seamount units are protected here.</p>
 </div>
 <div class="section level3">
@@ -200,9 +195,7 @@
 <span></span>
 <span><span class="co"># Show what seamounts look like... </span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">seamounts_sf</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span> <span class="co"># there are 7 seamount areas (seamounts that are touching)</span></span></code></pre>
-<div class="float">
-<img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/892e0ee5-6791-4fb7-acac-6e3fcb8718b0" alt="image"><div class="figcaption">image</div>
-</div>
+<p><img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/892e0ee5-6791-4fb7-acac-6e3fcb8718b0"></p>
 <pre><code><span><span class="co"># Create seamount patches - seamount areas that touch are considered the same patch</span></span>
 <span><span class="va">patches_sf</span> <span class="op">&lt;-</span> <span class="fu">patchwise</span><span class="fu">::</span><span class="fu"><a href="reference/create_patches.html">create_patches</a></span><span class="op">(</span><span class="va">seamounts_sf</span>, spatial_grid <span class="op">=</span> <span class="va">planning_sf</span><span class="op">)</span></span>
 <span></span>
@@ -234,9 +227,7 @@
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre>
-<div class="float">
-<img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/4fe72641-1693-43f5-a317-b86d30e7c54c" alt="image"><div class="figcaption">image</div>
-</div>
+<p><img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/4fe72641-1693-43f5-a317-b86d30e7c54c"></p>
 <p>Areas in yellow were identified by <code>prioritizr</code> as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a <code>prioritizr</code> run that does not protect whole seamounts:</p>
 <pre><code><span><span class="co"># Grab all relevant data</span></span>
 <span><span class="va">features_sf_nopatch</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/oceandatr/man/get_features.html" class="external-link">get_features</a></span><span class="op">(</span>spatial_grid <span class="op">=</span> <span class="va">planning_sf</span><span class="op">)</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span> </span>
@@ -256,9 +247,7 @@
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">solution_sf_nopatch</span> <span class="op"><a href="reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">solution_1</span><span class="op">)</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre>
-<div class="float">
-<img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/a4fee456-4206-4668-bd61-76e22b8b0222" alt="image"><div class="figcaption">image</div>
-</div>
+<p><img src="https://github.com/emlab-ucsb/patchwise/assets/40546424/a4fee456-4206-4668-bd61-76e22b8b0222"></p>
 <p>Only portions of seamount units are protected here.</p>
 </div>
 </div>
