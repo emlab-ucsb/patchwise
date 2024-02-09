@@ -110,7 +110,7 @@ mpa_location <- create_area(planning_rast, 20, 50)
 terra::plot(mpa_location)
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
+![](figure/unnamed-chunk-3-1.png)
 
 Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
 
@@ -217,7 +217,7 @@ result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = 
 terra::plot(result_rast)
 ```
 
-![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)
+![](../figure/unnamed-chunk-4-1.png)
 
 The areas in green are those selected by the prioritization for protection. We can clearly see the locked-in area (the green square) was included!
 
@@ -234,7 +234,7 @@ no_protection <- create_area(planning_rast, 20, 95)
 terra::plot(no_protection)
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
+![](../figure/unnamed-chunk-5-1.png)
 
 Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
 
@@ -334,7 +334,7 @@ result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = 
 terra::plot(result_rast)
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+![](../figure/unnamed-chunk-6-1.png)
 
 Great! The area that we don't want to include in the solution is removed!
 
@@ -441,7 +441,7 @@ result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = 
 terra::plot(result_rast)
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+![](../figure/unnamed-chunk-7-1.png)
 
 It looks like we got the results we wanted - the locked-in areas were included in the prioritization output as an area to protect, and the locked-out areas were not included!
 
@@ -462,7 +462,7 @@ mpa_location <- create_area(planning_sf, 20, 50)
 plot(mpa_location, main = NULL, border = F)
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![](../figure/unnamed-chunk-9-1.png)
 
 Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
 
@@ -570,7 +570,7 @@ result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patc
 plot(result_sf, main = NULL, border = F)
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+![](../figure/unnamed-chunk-10-1.png)
 
 The areas in yellow are those selected by the prioritization for protection. We can clearly see the locked-in area (the yellow square) was included!
 
@@ -588,7 +588,7 @@ no_protection <- create_area(planning_sf, 20, 95)
 plot(no_protection, main = NULL, border = F)
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
+![](../figure/unnamed-chunk-11-1.png)
 
 Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
 
@@ -688,7 +688,7 @@ result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patc
 plot(result_sf, main = NULL, border = F)
 ```
 
-![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png)
+![](../figure/unnamed-chunk-12-1.png)
 Great! The area that we don't want to include in the solution is removed!
 
 # Implement locked-in and locked-out areas using an `sf` input
@@ -797,6 +797,6 @@ result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patc
 plot(result_sf, main = NULL, border = F)
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png)
+![](../figure/unnamed-chunk-13-1.png)
 
 It looks like we got the results we wanted - the locked-in areas were included in the prioritization output as an area to protect, and the locked-out areas were not included!
