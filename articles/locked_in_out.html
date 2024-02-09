@@ -292,7 +292,7 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-4-1.png"></p>
+<p><img src="figure/unnamed-chunk-4-1.png"></p>
 <p>The areas in green are those selected by the prioritization for
 protection. We can clearly see the locked-in area (the green square) was
 included!</p>
@@ -310,7 +310,7 @@ results.</p>
 <span></span>
 <span><span class="co"># Plot fake locked-out area</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">no_protection</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-5-1.png"></p>
+<p><img src="figure/unnamed-chunk-5-1.png"></p>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -407,7 +407,7 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-6-1.png"></p>
+<p><img src="figure/unnamed-chunk-6-1.png"></p>
 <p>Great! The area that we don’t want to include in the solution is
 removed!</p>
 </div>
@@ -513,7 +513,7 @@ locked-out areas.</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-7-1.png"></p>
+<p><img src="figure/unnamed-chunk-7-1.png"></p>
 <p>It looks like we got the results we wanted - the locked-in areas were
 included in the prioritization output as an area to protect, and the
 locked-out areas were not included!</p>
@@ -531,7 +531,7 @@ MPA.</p>
 <span></span>
 <span><span class="co"># Plot fake MPA</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mpa_location</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-9-1.png"></p>
+<p><img src="figure/unnamed-chunk-9-1.png"></p>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -636,7 +636,7 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-10-1.png"></p>
+<p><img src="figure/unnamed-chunk-10-1.png"></p>
 <p>The areas in yellow are those selected by the prioritization for
 protection. We can clearly see the locked-in area (the yellow square)
 was included!</p>
@@ -654,7 +654,7 @@ results.</p>
 <span></span>
 <span><span class="co"># Plot fake locked-out area</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">no_protection</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-11-1.png"></p>
+<p><img src="figure/unnamed-chunk-11-1.png"></p>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -751,8 +751,8 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-12-1.png"> Great! The area that
-we don’t want to include in the solution is removed!</p>
+<p><img src="figure/unnamed-chunk-12-1.png"> Great! The area that we
+don’t want to include in the solution is removed!</p>
 </div>
 <div class="section level2">
 <h2 id="implement-locked-in-and-locked-out-areas-using-an-sf-input">Implement locked-in and locked-out areas using an <code>sf</code>
@@ -859,7 +859,7 @@ locked-out areas.</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../figure/unnamed-chunk-13-1.png"></p>
+<p><img src="figure/unnamed-chunk-13-1.png"></p>
 <p>It looks like we got the results we wanted - the locked-in areas were
 included in the prioritization output as an area to protect, and the
 locked-out areas were not included!</p>
