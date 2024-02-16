@@ -105,11 +105,6 @@ protection depending on the input format of the data
 case in our examples here. To get more consistent results, larger
 protective targets and/or more features should be added to the
 model.</p>
-<p>For our examples, we use the prioritization optimizer
-<code>gurobi</code>, which can be found <a href="https://www.gurobi.com/solutions/gurobi-optimizer/?campaignid=193283256&amp;adgroupid=138872523240&amp;creative=596136082788&amp;keyword=gurobi%20optimization&amp;matchtype=e&amp;gclid=CjwKCAjwtuOlBhBREiwA7agf1oUW5qsO9aXGpfbjy04XRAw0DRpVGdSlrnEYRyC2q-B9EafXdArQUhoCDxQQAvD_BwE" class="external-link">here</a>.
-Gurobi must be installed on your device and the <code>gurobi</code> R
-package must also be installed in R before you can run
-<code>prioritizr</code>.</p>
 <div class="section level2">
 <h2 id="implement-locked-in-areas-using-a-raster-input">Implement locked-in areas using a <code>raster</code> input<a class="anchor" aria-label="anchor" href="#implement-locked-in-areas-using-a-raster-input"></a>
 </h2>
@@ -188,7 +183,9 @@ MPA.</p>
 <span></span>
 <span><span class="co"># Plot fake MPA</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mpa_location</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-3-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-3-1.png" alt=""><p class="caption">Map of potential locked-in areas.</p>
+</div>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -221,7 +218,7 @@ seamounts).</p>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraints_rast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix_rast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve the prioritization</span></span>
 <span><span class="va">solution_rast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_rast</span><span class="op">)</span></span>
@@ -240,7 +237,7 @@ seamounts).</p>
 <span><span class="co">#&gt;   RHS range        [1e+00, 4e+03]</span></span>
 <span><span class="co">#&gt; Found heuristic solution: objective 3740.9750000</span></span>
 <span><span class="co">#&gt; Presolve removed 2915 rows and 1615 columns</span></span>
-<span><span class="co">#&gt; Presolve time: 0.63s</span></span>
+<span><span class="co">#&gt; Presolve time: 0.64s</span></span>
 <span><span class="co">#&gt; Presolved: 73381 rows, 54458 columns, 207121 nonzeros</span></span>
 <span><span class="co">#&gt; Variable types: 0 continuous, 54458 integer (54458 binary)</span></span>
 <span><span class="co">#&gt; Root relaxation presolved: 73381 rows, 54458 columns, 207121 nonzeros</span></span>
@@ -255,15 +252,15 @@ seamounts).</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    75523    3.7292125e+03   0.000000e+00   4.676925e+03      5s</span></span>
 <span><span class="co">#&gt;    88193    3.7247051e+03   0.000000e+00   1.152036e+03     10s</span></span>
-<span><span class="co">#&gt;    92893    3.7233423e+03   0.000000e+00   4.043997e+04     15s</span></span>
+<span><span class="co">#&gt;    92763    3.7233916e+03   0.000000e+00   6.880988e+03     15s</span></span>
 <span><span class="co">#&gt;    97523    3.7230699e+03   0.000000e+00   1.977410e+03     20s</span></span>
-<span><span class="co">#&gt;   103348    3.7230204e+03   0.000000e+00   5.256307e+04     25s</span></span>
-<span><span class="co">#&gt;   109517    3.7228460e+03   0.000000e+00   2.017317e+04     30s</span></span>
+<span><span class="co">#&gt;   103193    3.7230205e+03   0.000000e+00   4.106123e+04     25s</span></span>
+<span><span class="co">#&gt;   109387    3.7228462e+03   0.000000e+00   3.799363e+04     30s</span></span>
 <span><span class="co">#&gt;   113716    3.7228405e+03   0.000000e+00   5.063170e+02     35s</span></span>
-<span><span class="co">#&gt;   117666    3.7228325e+03   0.000000e+00   8.510317e+02     40s</span></span>
-<span><span class="co">#&gt;   120091    3.7228308e+03   0.000000e+00   1.106731e+03     45s</span></span>
-<span><span class="co">#&gt;   122601    3.7228285e+03   0.000000e+00   1.936248e+03     50s</span></span>
-<span><span class="co">#&gt; Concurrent spin time: 0.21s</span></span>
+<span><span class="co">#&gt;   117511    3.7228325e+03   0.000000e+00   5.532806e+03     40s</span></span>
+<span><span class="co">#&gt;   119951    3.7228309e+03   0.000000e+00   1.711754e+03     45s</span></span>
+<span><span class="co">#&gt;   122461    3.7228286e+03   0.000000e+00   1.202599e+03     50s</span></span>
+<span><span class="co">#&gt; Concurrent spin time: 0.04s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solved with dual simplex</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -272,14 +269,14 @@ seamounts).</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    69647    3.7229317e+03   0.000000e+00   0.000000e+00     51s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Root relaxation: objective 3.722932e+03, 69647 iterations, 50.17 seconds (151.93 work units)</span></span>
+<span><span class="co">#&gt; Root relaxation: objective 3.722932e+03, 69647 iterations, 50.41 seconds (151.93 work units)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     Nodes    |    Current Node    |     Objective Bounds      |     Work</span></span>
 <span><span class="co">#&gt;  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;      0     0 3722.93174    0 50601 3740.97500 3722.93174  0.48%     -   51s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Explored 1 nodes (69735 simplex iterations) in 51.23 seconds (153.73 work units)</span></span>
+<span><span class="co">#&gt; Explored 1 nodes (69735 simplex iterations) in 51.50 seconds (153.73 work units)</span></span>
 <span><span class="co">#&gt; Thread count was 9 (of 10 available processors)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solution count 1: 3740.98 </span></span>
@@ -292,7 +289,9 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-4-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-4-1.png" alt=""><p class="caption">Map of proposed solution with locked-in areas.</p>
+</div>
 <p>The areas in green are those selected by the prioritization for
 protection. We can clearly see the locked-in area (the green square) was
 included!</p>
@@ -310,7 +309,9 @@ results.</p>
 <span></span>
 <span><span class="co"># Plot fake locked-out area</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">no_protection</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-5-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-5-1.png" alt=""><p class="caption">Map of potential locked-out areas.</p>
+</div>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -340,7 +341,7 @@ seamounts).</p>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraints_rast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix_rast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve the prioritization</span></span>
 <span><span class="va">solution_rast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_rast</span><span class="op">)</span></span>
@@ -359,7 +360,7 @@ seamounts).</p>
 <span><span class="co">#&gt;   RHS range        [1e+00, 4e+03]</span></span>
 <span><span class="co">#&gt; Found heuristic solution: objective 3733.8850000</span></span>
 <span><span class="co">#&gt; Presolve removed 2633 rows and 1557 columns</span></span>
-<span><span class="co">#&gt; Presolve time: 0.56s</span></span>
+<span><span class="co">#&gt; Presolve time: 0.57s</span></span>
 <span><span class="co">#&gt; Presolved: 73663 rows, 54516 columns, 207723 nonzeros</span></span>
 <span><span class="co">#&gt; Variable types: 0 continuous, 54516 integer (54516 binary)</span></span>
 <span><span class="co">#&gt; Root relaxation presolved: 73663 rows, 54516 columns, 207723 nonzeros</span></span>
@@ -374,9 +375,9 @@ seamounts).</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    80813    3.7266671e+03   0.000000e+00   1.275446e+03      5s</span></span>
 <span><span class="co">#&gt;    89493    3.7240545e+03   0.000000e+00   1.496065e+03     10s</span></span>
-<span><span class="co">#&gt;    94833    3.7234491e+03   0.000000e+00   1.472206e+03     15s</span></span>
+<span><span class="co">#&gt;    94678    3.7234499e+03   0.000000e+00   1.518754e+03     15s</span></span>
 <span><span class="co">#&gt;    98708    3.7226503e+03   0.000000e+00   1.557963e+03     20s</span></span>
-<span><span class="co">#&gt;   103183    3.7217673e+03   0.000000e+00   2.651195e+03     25s</span></span>
+<span><span class="co">#&gt;   103033    3.7218083e+03   0.000000e+00   2.200248e+03     25s</span></span>
 <span><span class="co">#&gt;   108113    3.7216433e+03   0.000000e+00   7.935639e+03     30s</span></span>
 <span><span class="co">#&gt; Concurrent spin time: 0.00s</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -387,14 +388,14 @@ seamounts).</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    55179    3.7213346e+03   0.000000e+00   0.000000e+00     35s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Root relaxation: objective 3.721335e+03, 55179 iterations, 34.36 seconds (101.60 work units)</span></span>
+<span><span class="co">#&gt; Root relaxation: objective 3.721335e+03, 55179 iterations, 34.54 seconds (101.60 work units)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     Nodes    |    Current Node    |     Objective Bounds      |     Work</span></span>
 <span><span class="co">#&gt;  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;      0     0 3721.33461    0 49528 3733.88500 3721.33461  0.34%     -   35s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Explored 1 nodes (55285 simplex iterations) in 35.40 seconds (103.27 work units)</span></span>
+<span><span class="co">#&gt; Explored 1 nodes (55285 simplex iterations) in 35.60 seconds (103.27 work units)</span></span>
 <span><span class="co">#&gt; Thread count was 9 (of 10 available processors)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solution count 1: 3733.89 </span></span>
@@ -407,7 +408,9 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-6-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-6-1.png" alt=""><p class="caption">Map of proposed solution with locked-out areas.</p>
+</div>
 <p>Great! The area that we don’t want to include in the solution is
 removed!</p>
 </div>
@@ -443,7 +446,7 @@ locked-out areas.</p>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraints_rast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix_rast</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve the prioritization</span></span>
 <span><span class="va">solution_rast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_rast</span><span class="op">)</span></span>
@@ -477,13 +480,13 @@ locked-out areas.</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    78109    3.7276375e+03   0.000000e+00   1.808055e+03      5s</span></span>
 <span><span class="co">#&gt;    86897    3.7269661e+03   0.000000e+00   3.529364e+02     10s</span></span>
-<span><span class="co">#&gt;    97481    3.7256248e+03   0.000000e+00   1.452423e+03     15s</span></span>
-<span><span class="co">#&gt;   107426    3.7231009e+03   0.000000e+00   1.344078e+04     20s</span></span>
-<span><span class="co">#&gt;   111947    3.7230528e+03   0.000000e+00   2.752187e+03     25s</span></span>
+<span><span class="co">#&gt;    97327    3.7256267e+03   0.000000e+00   1.437909e+03     15s</span></span>
+<span><span class="co">#&gt;   107276    3.7231045e+03   0.000000e+00   3.567818e+03     20s</span></span>
+<span><span class="co">#&gt;   111807    3.7230532e+03   0.000000e+00   3.981599e+03     25s</span></span>
 <span><span class="co">#&gt;   116500    3.7230355e+03   0.000000e+00   4.431877e+03     30s</span></span>
-<span><span class="co">#&gt;   119976    3.7230221e+03   0.000000e+00   8.289934e+03     35s</span></span>
-<span><span class="co">#&gt;   123672    3.7230017e+03   0.000000e+00   2.159264e+03     40s</span></span>
-<span><span class="co">#&gt;   126286    3.7229920e+03   0.000000e+00   7.322767e+02     45s</span></span>
+<span><span class="co">#&gt;   119866    3.7230222e+03   0.000000e+00   2.720234e+03     35s</span></span>
+<span><span class="co">#&gt;   123492    3.7230029e+03   0.000000e+00   8.703959e+03     40s</span></span>
+<span><span class="co">#&gt;   126136    3.7229923e+03   0.000000e+00   3.281546e+03     45s</span></span>
 <span><span class="co">#&gt; Concurrent spin time: 0.00s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solved with dual simplex</span></span>
@@ -493,14 +496,14 @@ locked-out areas.</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    64341    3.7230710e+03   0.000000e+00   0.000000e+00     49s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Root relaxation: objective 3.723071e+03, 64341 iterations, 48.36 seconds (144.87 work units)</span></span>
+<span><span class="co">#&gt; Root relaxation: objective 3.723071e+03, 64341 iterations, 48.49 seconds (144.87 work units)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     Nodes    |    Current Node    |     Objective Bounds      |     Work</span></span>
 <span><span class="co">#&gt;  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;      0     0 3723.07098    0 49364 3741.06000 3723.07098  0.48%     -   49s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Explored 1 nodes (64433 simplex iterations) in 49.45 seconds (146.66 work units)</span></span>
+<span><span class="co">#&gt; Explored 1 nodes (64433 simplex iterations) in 49.59 seconds (146.66 work units)</span></span>
 <span><span class="co">#&gt; Thread count was 9 (of 10 available processors)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solution count 1: 3741.06 </span></span>
@@ -513,7 +516,10 @@ locked-out areas.</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_rast</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-7-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-7-1.png" alt=""><p class="caption">Map of proposed solution with both locked-in and
+locked-out areas.</p>
+</div>
 <p>It looks like we got the results we wanted - the locked-in areas were
 included in the prioritization output as an area to protect, and the
 locked-out areas were not included!</p>
@@ -531,7 +537,9 @@ MPA.</p>
 <span></span>
 <span><span class="co"># Plot fake MPA</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mpa_location</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-9-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-9-1.png" alt=""><p class="caption">Map of potential locked-in areas.</p>
+</div>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -564,7 +572,7 @@ seamounts).</p>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraints_sf</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix_sf</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve the prioritization</span></span>
 <span><span class="va">solution_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_sf</span><span class="op">)</span></span>
@@ -603,9 +611,9 @@ seamounts).</p>
 <span><span class="co">#&gt;    91314    3.7213965e+03   0.000000e+00   5.732673e+03     15s</span></span>
 <span><span class="co">#&gt;    96380    3.7208580e+03   0.000000e+00   9.779234e+02     20s</span></span>
 <span><span class="co">#&gt;   101294    3.7206395e+03   0.000000e+00   1.848140e+03     25s</span></span>
-<span><span class="co">#&gt;   107290    3.7200282e+03   0.000000e+00   1.169641e+03     30s</span></span>
+<span><span class="co">#&gt;   107134    3.7200285e+03   0.000000e+00   1.159798e+03     30s</span></span>
 <span><span class="co">#&gt;   113612    3.7199862e+03   0.000000e+00   2.998862e+03     35s</span></span>
-<span><span class="co">#&gt;   117346    3.7199740e+03   0.000000e+00   3.094314e+04     40s</span></span>
+<span><span class="co">#&gt;   117246    3.7199741e+03   0.000000e+00   1.646831e+03     40s</span></span>
 <span><span class="co">#&gt;   120256    3.7199589e+03   0.000000e+00   6.978084e+02     45s</span></span>
 <span><span class="co">#&gt; Concurrent spin time: 0.00s</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -616,14 +624,14 @@ seamounts).</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    58008    3.7200450e+03   0.000000e+00   0.000000e+00     50s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Root relaxation: objective 3.720045e+03, 58008 iterations, 49.04 seconds (144.48 work units)</span></span>
+<span><span class="co">#&gt; Root relaxation: objective 3.720045e+03, 58008 iterations, 49.27 seconds (144.48 work units)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     Nodes    |    Current Node    |     Objective Bounds      |     Work</span></span>
 <span><span class="co">#&gt;  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;      0     0 3720.04500    0 50171 3732.89000 3720.04500  0.34%     -   50s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Explored 1 nodes (58105 simplex iterations) in 50.33 seconds (146.73 work units)</span></span>
+<span><span class="co">#&gt; Explored 1 nodes (58105 simplex iterations) in 50.55 seconds (146.73 work units)</span></span>
 <span><span class="co">#&gt; Thread count was 9 (of 10 available processors)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solution count 2: 3732.89 3732.9 </span></span>
@@ -636,7 +644,9 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-10-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-10-1.png" alt=""><p class="caption">Map of proposed solution with locked-in areas.</p>
+</div>
 <p>The areas in yellow are those selected by the prioritization for
 protection. We can clearly see the locked-in area (the yellow square)
 was included!</p>
@@ -654,7 +664,9 @@ results.</p>
 <span></span>
 <span><span class="co"># Plot fake locked-out area</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">no_protection</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-11-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-11-1.png" alt=""><p class="caption">Map of potential locked-out areas.</p>
+</div>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
 seamounts).</p>
@@ -684,7 +696,7 @@ seamounts).</p>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraints_sf</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix_sf</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve the prioritization</span></span>
 <span><span class="va">solution_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_sf</span><span class="op">)</span></span>
@@ -703,7 +715,7 @@ seamounts).</p>
 <span><span class="co">#&gt;   RHS range        [1e+00, 4e+03]</span></span>
 <span><span class="co">#&gt; Found heuristic solution: objective 3732.8450000</span></span>
 <span><span class="co">#&gt; Presolve removed 2781 rows and 1608 columns</span></span>
-<span><span class="co">#&gt; Presolve time: 0.65s</span></span>
+<span><span class="co">#&gt; Presolve time: 0.64s</span></span>
 <span><span class="co">#&gt; Presolved: 74200 rows, 54562 columns, 211019 nonzeros</span></span>
 <span><span class="co">#&gt; Variable types: 0 continuous, 54562 integer (54562 binary)</span></span>
 <span><span class="co">#&gt; Root relaxation presolved: 74200 rows, 54562 columns, 211019 nonzeros</span></span>
@@ -719,10 +731,10 @@ seamounts).</p>
 <span><span class="co">#&gt;    79902    3.7235278e+03   0.000000e+00   1.105348e+03      5s</span></span>
 <span><span class="co">#&gt;    88841    3.7209518e+03   0.000000e+00   3.043537e+03     10s</span></span>
 <span><span class="co">#&gt;    93297    3.7199971e+03   0.000000e+00   3.033930e+03     15s</span></span>
-<span><span class="co">#&gt;    97387    3.7198828e+03   0.000000e+00   1.960177e+03     20s</span></span>
+<span><span class="co">#&gt;    97537    3.7198826e+03   0.000000e+00   6.369931e+02     20s</span></span>
 <span><span class="co">#&gt;   101633    3.7198377e+03   0.000000e+00   1.484675e+04     25s</span></span>
-<span><span class="co">#&gt;   105525    3.7198302e+03   0.000000e+00   2.847074e+04     30s</span></span>
-<span><span class="co">#&gt; Concurrent spin time: 1.55s</span></span>
+<span><span class="co">#&gt;   105681    3.7198301e+03   0.000000e+00   1.369798e+03     30s</span></span>
+<span><span class="co">#&gt; Concurrent spin time: 1.31s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solved with dual simplex</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -731,14 +743,14 @@ seamounts).</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    41579    3.7198669e+03   0.000000e+00   0.000000e+00     32s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Root relaxation: objective 3.719867e+03, 41579 iterations, 30.89 seconds (90.95 work units)</span></span>
+<span><span class="co">#&gt; Root relaxation: objective 3.719867e+03, 41579 iterations, 30.79 seconds (90.95 work units)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     Nodes    |    Current Node    |     Objective Bounds      |     Work</span></span>
 <span><span class="co">#&gt;  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;      0     0 3719.86693    0 49565 3732.84500 3719.86693  0.35%     -   31s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Explored 1 nodes (41687 simplex iterations) in 31.99 seconds (92.79 work units)</span></span>
+<span><span class="co">#&gt; Explored 1 nodes (41687 simplex iterations) in 31.89 seconds (92.79 work units)</span></span>
 <span><span class="co">#&gt; Thread count was 9 (of 10 available processors)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solution count 1: 3732.85 </span></span>
@@ -751,8 +763,8 @@ seamounts).</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-12-1.png"> Great! The area that we
-don’t want to include in the solution is removed!</p>
+<p><img src="figure/unnamed-chunk-12-1.png" alt="Map of proposed solution with locked-out areas."> Great! The area
+that we don’t want to include in the solution is removed!</p>
 </div>
 <div class="section level2">
 <h2 id="implement-locked-in-and-locked-out-areas-using-an-sf-input">Implement locked-in and locked-out areas using an <code>sf</code>
@@ -786,7 +798,7 @@ locked-out areas.</p>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraints_sf</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix_sf</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Solve the prioritization</span></span>
 <span><span class="va">solution_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_sf</span><span class="op">)</span></span>
@@ -805,7 +817,7 @@ locked-out areas.</p>
 <span><span class="co">#&gt;   RHS range        [1e+00, 4e+03]</span></span>
 <span><span class="co">#&gt; Found heuristic solution: objective 3732.9700000</span></span>
 <span><span class="co">#&gt; Presolve removed 4318 rows and 2857 columns</span></span>
-<span><span class="co">#&gt; Presolve time: 0.83s</span></span>
+<span><span class="co">#&gt; Presolve time: 0.81s</span></span>
 <span><span class="co">#&gt; Presolved: 72664 rows, 53313 columns, 206757 nonzeros</span></span>
 <span><span class="co">#&gt; Variable types: 0 continuous, 53313 integer (53313 binary)</span></span>
 <span><span class="co">#&gt; Found heuristic solution: objective 3732.9650000</span></span>
@@ -827,10 +839,10 @@ locked-out areas.</p>
 <span><span class="co">#&gt;   108720    3.7204223e+03   0.000000e+00   8.221710e+03     25s</span></span>
 <span><span class="co">#&gt;   113456    3.7203600e+03   0.000000e+00   1.704823e+04     30s</span></span>
 <span><span class="co">#&gt;   119904    3.7201420e+03   0.000000e+00   1.317371e+04     35s</span></span>
-<span><span class="co">#&gt;   125883    3.7201043e+03   0.000000e+00   2.361554e+03     40s</span></span>
-<span><span class="co">#&gt;   128253    3.7200995e+03   0.000000e+00   1.188923e+03     45s</span></span>
-<span><span class="co">#&gt;   130553    3.7200964e+03   0.000000e+00   7.353355e+02     50s</span></span>
-<span><span class="co">#&gt; Concurrent spin time: 1.65s</span></span>
+<span><span class="co">#&gt;   125763    3.7201045e+03   0.000000e+00   1.655345e+03     40s</span></span>
+<span><span class="co">#&gt;   128133    3.7200997e+03   0.000000e+00   2.980871e+03     45s</span></span>
+<span><span class="co">#&gt;   130433    3.7200965e+03   0.000000e+00   8.521033e+02     50s</span></span>
+<span><span class="co">#&gt; Concurrent spin time: 1.78s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solved with dual simplex</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -839,14 +851,14 @@ locked-out areas.</p>
 <span><span class="co">#&gt; Iteration    Objective       Primal Inf.    Dual Inf.      Time</span></span>
 <span><span class="co">#&gt;    60783    3.7201850e+03   0.000000e+00   0.000000e+00     51s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Root relaxation: objective 3.720185e+03, 60783 iterations, 49.62 seconds (137.67 work units)</span></span>
+<span><span class="co">#&gt; Root relaxation: objective 3.720185e+03, 60783 iterations, 49.83 seconds (137.67 work units)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     Nodes    |    Current Node    |     Objective Bounds      |     Work</span></span>
 <span><span class="co">#&gt;  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;      0     0 3720.18505    0 48931 3732.96500 3720.18505  0.34%     -   50s</span></span>
+<span><span class="co">#&gt;      0     0 3720.18505    0 48931 3732.96500 3720.18505  0.34%     -   51s</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Explored 1 nodes (60901 simplex iterations) in 50.87 seconds (139.89 work units)</span></span>
+<span><span class="co">#&gt; Explored 1 nodes (60901 simplex iterations) in 51.06 seconds (139.89 work units)</span></span>
 <span><span class="co">#&gt; Thread count was 9 (of 10 available processors)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Solution count 2: 3732.97 3732.97 </span></span>
@@ -859,7 +871,10 @@ locked-out areas.</p>
 <span></span>
 <span><span class="co"># Show the results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result_sf</span>, main <span class="op">=</span> <span class="cn">NULL</span>, border <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-13-1.png"></p>
+<div class="figure">
+<img src="figure/unnamed-chunk-13-1.png" alt=""><p class="caption">Map of proposed solution with locked-in and
+locked-out areas.</p>
+</div>
 <p>It looks like we got the results we wanted - the locked-in areas were
 included in the prioritization output as an area to protect, and the
 locked-out areas were not included!</p>
@@ -872,7 +887,7 @@ locked-out areas were not included!</p>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by Echelle Burns.</p>
+<p>Developed by Echelle S. Burns, Jason Flower.</p>
 </div>
 
 <div class="pkgdown-footer-right">

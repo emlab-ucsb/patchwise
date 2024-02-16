@@ -129,7 +129,7 @@
 <span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_manual_targets.html" class="external-link">add_manual_targets</a></span><span class="op">(</span><span class="va">constraint_targets</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_gurobi_solver.html" class="external-link">add_gurobi_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> No optimization solvers are installed.</span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> You must install a solver to generate prioritizations.</span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> See `?solvers` for options.</span>
@@ -147,7 +147,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by Echelle Burns.</p>
+  <p></p><p>Developed by Echelle S. Burns, Jason Flower.</p>
 </div>
 
 <div class="pkgdown-footer-right">
