@@ -359,6 +359,7 @@ result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patc
 # Show the results
 plot(result_sf, main = NULL, border = F)
 ```
+
 Great! The area that we don't want to include in the solution is removed!
 
 # Implement locked-in and locked-out areas using an `sf` input

@@ -687,6 +687,7 @@ plot(result_sf, main = NULL, border = F)
 ```
 
 ![Map of proposed solution with locked-out areas.](figure/unnamed-chunk-12-1.png)
+
 Great! The area that we don't want to include in the solution is removed!
 
 # Implement locked-in and locked-out areas using an `sf` input
