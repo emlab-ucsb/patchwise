@@ -1,9 +1,10 @@
 Package: patchwise
 Title: Create Patches of Feature Groups for Use in Spatial Prioritizations
 Version: 0.1.0
-Authors@R: 
-    person("Echelle", "Burns", , "echelle_burns@ucsb.edu", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0002-3902-1410"))
+Authors@R: c(
+    person(given = "Echelle S.", family = "Burns", email = "echelle_burns@ucsb.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-3902-1410")), 
+    person(given = "Jason", family = "Flower", email = "jflower@ucsb.edu", role = c("aut"), comment = c(ORCID = "0000-0002-6731-8182"))     
+           )
 Description: Allows for the selection of entire feature groups (features that touch) for protection via prioritizr, as opposed to the selection of individual cells across different feature groups.
 License: GPL (>= 3)
 Encoding: UTF-8
