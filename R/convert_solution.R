@@ -10,7 +10,7 @@
 #' @export
 #'
 #' @examples
-#'# \dontrun{
+#' \dontrun{
 #'# Start with a little housekeeping to get the data from oceandatr
 #'# Choose area of interest (Bermuda EEZ)
 #'area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
@@ -51,7 +51,7 @@
 #'# Convert to a more digestible format
 #'suggested_protection <- convert_solution(solution = solution, patch_df = patches_raster_df,
 #'   spatial_grid = planning_raster)
-#'# }
+#' }
 
 convert_solution <- function(solution, patch_df, spatial_grid) {
 

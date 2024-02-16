@@ -20,6 +20,7 @@ A raster or sf object that denotes areas suggested for protection (value = 1)
 This function converts the prioritization solution that uses patches to a raster or sf object (depending on the format of your spatial_grid) that clearly marks areas suggested for protection (1) and areas not suggested for protection (0)
 }
 \examples{
+\dontrun{
 # Start with a little housekeeping to get the data from oceandatr
 # Choose area of interest (Bermuda EEZ)
 area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
@@ -60,4 +61,5 @@ solution <- solve(problem_raster)
 # Convert to a more digestible format
 suggested_protection <- convert_solution(solution = solution, patch_df = patches_raster_df,
   spatial_grid = planning_raster)
+}
 }
