@@ -74,7 +74,8 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Start with a little housekeeping to get the data from oceandatr</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># Start with a little housekeeping to get the data from oceandatr</span></span></span>
 <span class="r-in"><span><span class="co"># Choose area of interest (Bermuda EEZ)</span></span></span>
 <span class="r-in"><span><span class="va">area</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_area.html" class="external-link">get_area</a></span><span class="op">(</span>area_name <span class="op">=</span> <span class="st">"Bermuda"</span>,  mregions_column <span class="op">=</span> <span class="st">"territory1"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">projection</span> <span class="op">&lt;-</span><span class="st">'+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'</span></span></span>
@@ -82,20 +83,6 @@
 <span class="r-in"><span><span class="va">planning_raster</span> <span class="op">&lt;-</span> <span class="fu">spatialgridr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/spatialgridr/reference/get_grid.html" class="external-link">get_grid</a></span><span class="op">(</span><span class="va">area</span>, projection <span class="op">=</span> <span class="va">projection</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Grab all relevant data</span></span></span>
 <span class="r-in"><span><span class="va">features_raster</span> <span class="op">&lt;-</span> <span class="fu">oceandatr</span><span class="fu">::</span><span class="fu"><a href="https://emlab-ucsb.github.io/oceandatr/reference/get_features.html" class="external-link">get_features</a></span><span class="op">(</span>spatial_grid <span class="op">=</span> <span class="va">planning_raster</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Getting depth zones...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> This may take seconds to minutes, depending on grid size</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Getting seamount data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Spherical geometry (s2) switched off</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> although coordinates are longitude/latitude, st_intersection assumes that they</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> are planar</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>attribute variables are assumed to be spatially constant throughout all geometries</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Spherical geometry (s2) switched on</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Getting knoll data...</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>attribute variables are assumed to be spatially constant throughout all geometries</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Getting geomorphology data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Getting coral data...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> |-- Coral data found for antipatharia coral, cold coral, octocoral</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Getting environmental regions data... This could take several minutes</span>
 <span class="r-in"><span><span class="co"># Separate seamount data - we want to protect entire patches</span></span></span>
 <span class="r-in"><span><span class="va">seamounts_raster</span> <span class="op">&lt;-</span> <span class="va">features_raster</span><span class="op">[[</span><span class="st">"seamounts"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">features_raster</span> <span class="op">&lt;-</span> <span class="va">features_raster</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">features_raster</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">features_raster</span><span class="op">)</span> <span class="op">!=</span> <span class="st">"seamounts"</span><span class="op">]</span><span class="op">]</span><span class="op">]</span></span></span>
@@ -106,13 +93,6 @@
 <span class="r-in"><span><span class="co"># Create patch dataframe</span></span></span>
 <span class="r-in"><span><span class="va">patches_raster_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_patch_df.html">create_patch_df</a></span><span class="op">(</span>spatial_grid <span class="op">=</span> <span class="va">planning_raster</span>, features <span class="op">=</span> <span class="va">features_raster</span>,</span></span>
 <span class="r-in"><span>  patches <span class="op">=</span> <span class="va">patches_raster</span>, costs <span class="op">=</span> <span class="va">cost_raster</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 1 of 7"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 2 of 7"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 3 of 7"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 4 of 7"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 5 of 7"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 6 of 7"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Processing patch 7 of 7"</span>
 <span class="r-in"><span><span class="co"># Create boundary matrix for prioritizr</span></span></span>
 <span class="r-in"><span><span class="va">boundary_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_boundary_matrix.html">create_boundary_matrix</a></span><span class="op">(</span>spatial_grid <span class="op">=</span> <span class="va">planning_raster</span>, patches <span class="op">=</span> <span class="va">patches_raster</span>,</span></span>
 <span class="r-in"><span>  patch_df <span class="op">=</span> <span class="va">patches_raster_df</span><span class="op">)</span></span></span>
@@ -130,16 +110,12 @@
 <span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_boundary_penalties.html" class="external-link">add_boundary_penalties</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fl">0.000002</span>, data <span class="op">=</span> <span class="va">boundary_matrix</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu">prioritizr</span><span class="fu">::</span><span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>gap <span class="op">=</span> <span class="fl">0.1</span>, threads <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> No optimization solvers are installed.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> You must install a solver to generate prioritizations.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> See `?solvers` for options.</span>
 <span class="r-in"><span><span class="co"># Solve problem</span></span></span>
 <span class="r-in"><span><span class="va">solution</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">problem_raster</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'problem_raster' not found</span>
 <span class="r-in"><span><span class="co"># Convert to a more digestible format</span></span></span>
 <span class="r-in"><span><span class="va">suggested_protection</span> <span class="op">&lt;-</span> <span class="fu">convert_solution</span><span class="op">(</span>solution <span class="op">=</span> <span class="va">solution</span>, patch_df <span class="op">=</span> <span class="va">patches_raster_df</span>,</span></span>
 <span class="r-in"><span>  spatial_grid <span class="op">=</span> <span class="va">planning_raster</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'solution' not found</span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
