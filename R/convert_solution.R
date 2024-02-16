@@ -44,7 +44,7 @@
 #'   prioritizr::add_manual_targets(constraint_targets) %>%
 #'   prioritizr::add_binary_decisions() %>%
 #'   prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix) %>%
-#'   prioritizr::add_gurobi_solver(gap = 0.1, threads = parallel::detectCores()-1)
+#'   prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
 #'# Solve problem
 #'solution <- solve(problem_raster)
 #'# Convert to a more digestible format
