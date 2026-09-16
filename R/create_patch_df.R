@@ -58,7 +58,7 @@ create_patch_df <- function(spatial_grid, features, patches, costs = NULL, locke
 
   if (class(spatial_grid)[1] %in% c("RasterLayer", "SpatRaster")) {
     # Initialize
-    pu_grid_data <- tibble::tibble(id = as.list(seq_len(nrow(terra::as.data.frame(spatial_grid, na.rm = FALSE))))) %>%
+    pu_grid_data <- tibble::tibble(idx = as.list(seq_len(nrow(terra::as.data.frame(spatial_grid, na.rm = FALSE))))) %>%
       dplyr::bind_cols(tibble::tibble(terra::as.data.frame(features, na.rm = FALSE))) %>%
       dplyr::mutate(patch = 0)
 
@@ -73,7 +73,7 @@ create_patch_df <- function(spatial_grid, features, patches, costs = NULL, locke
     pu_sm_data <- lapply(names(patches), function(i) {
       curr_sm_pu <-
         tibble::tibble(
-          id = list(as.numeric(row.names(terra::as.data.frame(patches[[i]], na.rm = FALSE))[which(terra::as.data.frame(patches[[i]], na.rm = FALSE) > 0.5)]))) %>%
+          idx = list(as.numeric(row.names(terra::as.data.frame(patches[[i]], na.rm = FALSE))[which(terra::as.data.frame(patches[[i]], na.rm = FALSE) > 0.5)]))) %>%
        dplyr::bind_cols(
           terra::as.data.frame(features * patches[[i]], na.rm = FALSE) %>%
             stats::setNames(names(features)) %>%
@@ -127,7 +127,7 @@ create_patch_df <- function(spatial_grid, features, patches, costs = NULL, locke
     }
 
     # Initialize
-    pu_grid_data <- tibble::tibble(id = as.list(seq_len(nrow(spatial_grid)))) %>%
+    pu_grid_data <- tibble::tibble(idx = as.list(seq_len(nrow(spatial_grid)))) %>%
       dplyr::bind_cols(features) %>%
       dplyr::mutate(patch = 0)
 
@@ -144,7 +144,7 @@ create_patch_df <- function(spatial_grid, features, patches, costs = NULL, locke
     pu_sm_data <- lapply(names(patches), function(i) {
       curr_sm_pu <-
         tibble::tibble(
-          id = list(as.numeric(row.names(patches[which(patches[,i] > 0.5),])))) %>%
+          idx = list(as.numeric(row.names(patches[which(patches[,i] > 0.5),])))) %>%
         dplyr::bind_cols(data.frame(t(features %>% dplyr::mutate_all(., ~(.*patches[,i])) %>%
                                         colSums(., na.rm = T))))
 
@@ -182,6 +182,9 @@ create_patch_df <- function(spatial_grid, features, patches, costs = NULL, locke
   # planning units
   constraints <- data.frame(test  = rep(0,nrow(pu_data)))
 
+  # add in id column for planning unit data
+  pu_data$id <- seq_len(nrow(pu_data))
+
   index <- 1
 
   #Create a vector with a '1' for each combination of patch-level
@@ -189,7 +192,7 @@ create_patch_df <- function(spatial_grid, features, patches, costs = NULL, locke
   for (i in seq_len(nrow(pu_sm_data))) {
     print(paste0("Processing patch ", i, " of ", nrow(pu_sm_data)))
 
-    for (j in pu_sm_data$id[[i]]) {
+    for (j in pu_sm_data$idx[[i]]) {
       v <- rep(0, nrow(pu_data)) # initialize with zeros
       v[nrow(pu_grid_data) + i] <- 1  # specify patch-level planning unit
       v[as.numeric(j)] <- 1 # specify grid cell-level planning unit

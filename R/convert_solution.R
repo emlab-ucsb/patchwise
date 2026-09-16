@@ -61,7 +61,7 @@ convert_solution <- function(solution, patch_df, spatial_grid) {
   if(!check_df(patch_df)) { stop("patch_df must be a dataframe object")}
 
 
-  planning_unit_id <-  unique(unlist(patch_df$id[which(solution$solution_1 > 0.5)]))
+  planning_unit_id <-  unique(unlist(patch_df$idx[which(solution$solution_1 > 0.5)]))
 
   if(class(spatial_grid)[1] %in% c("RasterLayer", "SpatRaster")){
     solution <- spatial_grid*0
