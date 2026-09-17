@@ -27,775 +27,354 @@ A quick note about `prioritizr` - sometimes there are several cells that are equ
 To generate our data for this example, we will use data from Bermuda generated via `oceandatr`.
 
 
-```r
+``` r
 # Load libraries
 library(patchwise)
-
-# Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
-projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
-
-# Create a planning grid
-planning_rast <- spatialgridr::get_grid(area, projection = projection)
-
-# Grab all relevant data
-features_rast <- oceandatr::get_features(spatial_grid = planning_rast)
-
-# Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_rast <- stats::setNames(planning_rast, "cost")
-
-# Separate seamount data - we want to protect entire patches
-seamounts_rast <- features_rast[["seamounts"]]
-features_rast <- features_rast[[names(features_rast)[names(features_rast) != "seamounts"]]]
+library(terra)
+library(sf)
+library(prioritizr)
 ```
 
-We can generate a locked-in layer that would represent an existing MPA.
+We will import some basic planning data, same as in the `patchwise` readme. For this example we will use a a 40 x 40 raster planning grid which has a cost value of 1 for each cell, and the following features that will be targeted in the prioritization:
+
+- 4 random, binary (0 or 1) data layers, representing species distributions; for this example we are calling them fish
+- 3 "patches" of contiguous features; for this example we are calling them seamounts
 
 
-```r
-# Create a function to produce a square area
-create_area <- function(spatial_grid, mpa_size, edge_offset) {
-  if(class(spatial_grid)[1] %in% c("RasterLayer", "SpatRaster")) {
-    terra::rast(spatial_grid,
-                vals = c(rep(NA, (terra::ncol(spatial_grid)*edge_offset)),
-                         rep(c(rep(NA, edge_offset),
-                               rep(1, mpa_size),
-                               rep(NA, (terra::ncol(spatial_grid)-(edge_offset+mpa_size)))),
-                             mpa_size),
-                         rep(NA, (terra::ncol(spatial_grid)*(terra::nrow(spatial_grid)-edge_offset-mpa_size)))))
-  } else if(class(spatial_grid)[1] == "sf") {
-    sf_to_grid <- sf::st_make_grid(spatial_grid, cellsize = sqrt(sf::st_area(spatial_grid[1,])))
-    sf_centroid <- sf::st_centroid(sf_to_grid) %>%
-      sf::st_coordinates(.) %>%
-      as.data.frame() %>%
-      dplyr::mutate(X = round(X, digits = 4),
-                    Y = round(Y, digits = 4))
+``` r
+#import planning units/ cost raster
+pu_raster <- rast(system.file("extdata/pu_raster.tif", package = "patchwise"))
 
-    # sf::st_make_grid changes the orientation of how cells are read - change them back
-    sf_to_grid <- sf_to_grid %>%
-      as.data.frame() %>%
-      dplyr::bind_cols(sf_centroid) %>%
-      dplyr::arrange(dplyr::desc(Y), X) %>%
-      dplyr::select(-X, -Y)
+#import fish distributions
+fish_distributions <- rast(system.file("extdata/spp_distributions.tif", package = "patchwise"))
 
-    cols_sf_to_grid <- length(unique(sf_centroid$X))
-    rows_sf_to_grid <- length(unique(sf_centroid$Y))
-
-    sf_to_grid <- sf_to_grid %>%
-      sf::st_sf() %>%
-      dplyr::mutate(layer = c(rep(NA, (cols_sf_to_grid*edge_offset)),
-                         rep(c(rep(NA, edge_offset),
-                               rep(1, mpa_size),
-                               rep(NA, (cols_sf_to_grid-(edge_offset+mpa_size)))),
-                             mpa_size),
-                         rep(NA, (cols_sf_to_grid*(rows_sf_to_grid-edge_offset-mpa_size)))))
-
-    # the planning sf only includes polygons for the planning area (we need to remove them) so the number of cells matches the planning grid
-    sf_to_grid <- sf_to_grid[sf_to_grid$geometry %in% spatial_grid[[1]], ]
-    rownames(sf_to_grid) <- NULL
-    sf_to_grid %>%
-      dplyr::relocate(layer, 1)
-    }
-}
+#import seamounts
+seamounts <- rast(system.file("extdata/seamounts.tif", package = "patchwise"))
 ```
 
+We will generate a square within our planning area that will be used as our locked in area
 
-```r
-# Create a fake MPA
-mpa_location <- create_area(planning_rast, 20, 50)
 
-# Plot fake MPA
-terra::plot(mpa_location)
+``` r
+locked_area <- as.polygons(ext(5, 15, 25, 35)) |>
+  rasterize(pu_raster, background = 0) |>
+  setNames("Locked-in")
 ```
 
-![Map of potential locked-in areas.](figure/unnamed-chunk-3-1.png)
-
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
+Let's look at our fish distributions, seamounts and locked-in area:
 
 
-```r
-# Create seamount patches - seamount areas that touch are considered the same patch
-patches_rast <- patchwise::create_patches(seamounts_rast)
-
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast, locked_in = mpa_location)
-#> [1] "Processing patch 1 of 7"
-#> [1] "Processing patch 2 of 7"
-#> [1] "Processing patch 3 of 7"
-#> [1] "Processing patch 4 of 7"
-#> [1] "Processing patch 5 of 7"
-#> [1] "Processing patch 6 of 7"
-#> [1] "Processing patch 7 of 7"
-
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast, locked_in = mpa_location)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
-
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_rast <- solve(problem_rast)
-#> Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (mac64[arm])
-#> 
-#> CPU model: Apple M1 Max
-#> Thread count: 10 physical cores, 10 logical processors, using up to 9 threads
-#> 
-#> Optimize a model with 76296 rows, 56073 columns and 214386 nonzeros
-#> Model fingerprint: 0xc25c3da2
-#> Variable types: 0 continuous, 56073 integer (56073 binary)
-#> Coefficient statistics:
-#>   Matrix range     [1e+00, 5e+02]
-#>   Objective range  [2e-02, 5e+02]
-#>   Bounds range     [1e+00, 1e+00]
-#>   RHS range        [1e+00, 4e+03]
-#> Found heuristic solution: objective 3740.9750000
-#> Presolve removed 2915 rows and 1615 columns
-#> Presolve time: 0.64s
-#> Presolved: 73381 rows, 54458 columns, 207121 nonzeros
-#> Variable types: 0 continuous, 54458 integer (54458 binary)
-#> Root relaxation presolved: 73381 rows, 54458 columns, 207121 nonzeros
-#> 
-#> Deterministic concurrent LP optimizer: primal and dual simplex
-#> Showing first log only...
-#> 
-#> Warning: Markowitz tolerance tightened to 0.25
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    75523    3.7292125e+03   0.000000e+00   4.676925e+03      5s
-#>    88193    3.7247051e+03   0.000000e+00   1.152036e+03     10s
-#>    92763    3.7233916e+03   0.000000e+00   6.880988e+03     15s
-#>    97523    3.7230699e+03   0.000000e+00   1.977410e+03     20s
-#>   103193    3.7230205e+03   0.000000e+00   4.106123e+04     25s
-#>   109387    3.7228462e+03   0.000000e+00   3.799363e+04     30s
-#>   113716    3.7228405e+03   0.000000e+00   5.063170e+02     35s
-#>   117511    3.7228325e+03   0.000000e+00   5.532806e+03     40s
-#>   119951    3.7228309e+03   0.000000e+00   1.711754e+03     45s
-#>   122461    3.7228286e+03   0.000000e+00   1.202599e+03     50s
-#> Concurrent spin time: 0.04s
-#> 
-#> Solved with dual simplex
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    69647    3.7229317e+03   0.000000e+00   0.000000e+00     51s
-#> 
-#> Root relaxation: objective 3.722932e+03, 69647 iterations, 50.41 seconds (151.93 work units)
-#> 
-#>     Nodes    |    Current Node    |     Objective Bounds      |     Work
-#>  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
-#> 
-#>      0     0 3722.93174    0 50601 3740.97500 3722.93174  0.48%     -   51s
-#> 
-#> Explored 1 nodes (69735 simplex iterations) in 51.50 seconds (153.73 work units)
-#> Thread count was 9 (of 10 available processors)
-#> 
-#> Solution count 1: 3740.98 
-#> 
-#> Optimal solution found (tolerance 1.00e-01)
-#> Best objective 3.740975000000e+03, best bound 3.722931735863e+03, gap 0.4823%
-
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
+``` r
+plot(c(fish_distributions, seamounts, locked_area))
 ```
 
-![Map of proposed solution with locked-in areas.](figure/unnamed-chunk-4-1.png)
+![plot of chunk visualize-data](figure/visualize-data-1.png)
 
-The areas in green are those selected by the prioritization for protection. We can clearly see the locked-in area (the green square) was included!
+
+Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts) - this is the same process as shown in the main `patchwise` readme, but with the locked-in area.
+
+
+``` r
+# Create seamount patches
+patches_rast <- create_patches(seamounts)
+
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_rast <- create_patch_df(spatial_grid = pu_raster, features = fish_distributions, patches = patches_rast, costs = pu_raster, locked_in = locked_area)
+
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_rast <- features_targets(targets = rep(0.2, (nlyr(fish_distributions) + 1)), features = fish_distributions, pre_patches = seamounts, locked_in = locked_area)
+
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_rast <- constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
+```
+
+With all the data preparation now done, we can run a prioritization using `prioritizr`:
+
+
+
+For comparison, we will run a prioritization without using `patchwise`
+
+
+
+We can now plot the solutions, and overlaying the outlines of the seamounts (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The square, locked-in area is included in both scenarios.
+
+
+``` r
+plot(c(solution_no_patches, sol_rast_patches),
+     fun = function()lines(as.polygons(seamounts), col = "red"),
+     plg = list(legend = c("Not selected", "Selected")))
+```
+
+![plot of chunk prioritization-plot](figure/prioritization-plot-1.png)
 
 # Implement locked-out areas using a `raster` input
 
-What if we want to note of an area that we cannot consider for protection? We can include a "locked-out" area. We repeat the example above, but this time we will exclude this area from the prioritization results.
+What if we want to note of an area that we cannot consider for protection? We can include a "locked-out" area. We repeat the example above, but this time we will exclude the "locked_area" from the prioritization results.
 
 
-```r
-# Create a fake locked-out area
-no_protection <- create_area(planning_rast, 20, 95)
 
-# Plot fake locked-out area
-terra::plot(no_protection)
+We can now plot the solutions, and overlaying the outlines of the seamounts and locked-out area (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The square, locked-out area (red outline) is excluded in both scenarios.
+
+
+``` r
+plot(c(solution_no_patches, sol_rast_patches),
+     fun = function()lines(rbind(as.polygons(seamounts), as.polygons(locked_area)), col = "red"),
+     plg = list(legend = c("Not selected", "Selected")))
 ```
 
-![Map of potential locked-out areas.](figure/unnamed-chunk-5-1.png)
-
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
-
-
-```r
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast, locked_out = no_protection)
-#> [1] "Processing patch 1 of 7"
-#> [1] "Processing patch 2 of 7"
-#> [1] "Processing patch 3 of 7"
-#> [1] "Processing patch 4 of 7"
-#> [1] "Processing patch 5 of 7"
-#> [1] "Processing patch 6 of 7"
-#> [1] "Processing patch 7 of 7"
-
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
-
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_rast <- solve(problem_rast)
-#> Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (mac64[arm])
-#> 
-#> CPU model: Apple M1 Max
-#> Thread count: 10 physical cores, 10 logical processors, using up to 9 threads
-#> 
-#> Optimize a model with 76296 rows, 56073 columns and 214385 nonzeros
-#> Model fingerprint: 0xf7b92fc5
-#> Variable types: 0 continuous, 56073 integer (56073 binary)
-#> Coefficient statistics:
-#>   Matrix range     [1e+00, 5e+02]
-#>   Objective range  [2e-02, 5e+02]
-#>   Bounds range     [1e+00, 1e+00]
-#>   RHS range        [1e+00, 4e+03]
-#> Found heuristic solution: objective 3733.8850000
-#> Presolve removed 2633 rows and 1557 columns
-#> Presolve time: 0.57s
-#> Presolved: 73663 rows, 54516 columns, 207723 nonzeros
-#> Variable types: 0 continuous, 54516 integer (54516 binary)
-#> Root relaxation presolved: 73663 rows, 54516 columns, 207723 nonzeros
-#> 
-#> Deterministic concurrent LP optimizer: primal and dual simplex
-#> Showing first log only...
-#> 
-#> Warning: Markowitz tolerance tightened to 0.5
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    80813    3.7266671e+03   0.000000e+00   1.275446e+03      5s
-#>    89493    3.7240545e+03   0.000000e+00   1.496065e+03     10s
-#>    94678    3.7234499e+03   0.000000e+00   1.518754e+03     15s
-#>    98708    3.7226503e+03   0.000000e+00   1.557963e+03     20s
-#>   103033    3.7218083e+03   0.000000e+00   2.200248e+03     25s
-#>   108113    3.7216433e+03   0.000000e+00   7.935639e+03     30s
-#> Concurrent spin time: 0.00s
-#> 
-#> Solved with dual simplex
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    55179    3.7213346e+03   0.000000e+00   0.000000e+00     35s
-#> 
-#> Root relaxation: objective 3.721335e+03, 55179 iterations, 34.54 seconds (101.60 work units)
-#> 
-#>     Nodes    |    Current Node    |     Objective Bounds      |     Work
-#>  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
-#> 
-#>      0     0 3721.33461    0 49528 3733.88500 3721.33461  0.34%     -   35s
-#> 
-#> Explored 1 nodes (55285 simplex iterations) in 35.60 seconds (103.27 work units)
-#> Thread count was 9 (of 10 available processors)
-#> 
-#> Solution count 1: 3733.89 
-#> 
-#> Optimal solution found (tolerance 1.00e-01)
-#> Best objective 3.733885000000e+03, best bound 3.721335000000e+03, gap 0.3361%
-
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
-```
-
-![Map of proposed solution with locked-out areas.](figure/unnamed-chunk-6-1.png)
-
-Great! The area that we don't want to include in the solution is removed!
-
-# Implement locked-in and locked-out areas using a `raster` input
-
-We can also run a scenario in which we have both locked-in and locked-out areas.
-
-
-```r
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast, locked_in = mpa_location, locked_out = no_protection)
-#> [1] "Processing patch 1 of 7"
-#> [1] "Processing patch 2 of 7"
-#> [1] "Processing patch 3 of 7"
-#> [1] "Processing patch 4 of 7"
-#> [1] "Processing patch 5 of 7"
-#> [1] "Processing patch 6 of 7"
-#> [1] "Processing patch 7 of 7"
-
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast, locked_in = mpa_location, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
-
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_rast <- solve(problem_rast)
-#> Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (mac64[arm])
-#> 
-#> CPU model: Apple M1 Max
-#> Thread count: 10 physical cores, 10 logical processors, using up to 9 threads
-#> 
-#> Optimize a model with 76297 rows, 56073 columns and 214786 nonzeros
-#> Model fingerprint: 0x8acc3e12
-#> Variable types: 0 continuous, 56073 integer (56073 binary)
-#> Coefficient statistics:
-#>   Matrix range     [1e+00, 5e+02]
-#>   Objective range  [2e-02, 5e+02]
-#>   Bounds range     [1e+00, 1e+00]
-#>   RHS range        [1e+00, 4e+03]
-#> Found heuristic solution: objective 3741.0600000
-#> Presolve removed 4596 rows and 2855 columns
-#> Presolve time: 0.63s
-#> Presolved: 71701 rows, 53218 columns, 202309 nonzeros
-#> Variable types: 0 continuous, 53218 integer (53218 binary)
-#> Root relaxation presolved: 71701 rows, 53218 columns, 202309 nonzeros
-#> 
-#> Deterministic concurrent LP optimizer: primal and dual simplex
-#> Showing first log only...
-#> 
-#> Warning: Markowitz tolerance tightened to 0.5
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    78109    3.7276375e+03   0.000000e+00   1.808055e+03      5s
-#>    86897    3.7269661e+03   0.000000e+00   3.529364e+02     10s
-#>    97327    3.7256267e+03   0.000000e+00   1.437909e+03     15s
-#>   107276    3.7231045e+03   0.000000e+00   3.567818e+03     20s
-#>   111807    3.7230532e+03   0.000000e+00   3.981599e+03     25s
-#>   116500    3.7230355e+03   0.000000e+00   4.431877e+03     30s
-#>   119866    3.7230222e+03   0.000000e+00   2.720234e+03     35s
-#>   123492    3.7230029e+03   0.000000e+00   8.703959e+03     40s
-#>   126136    3.7229923e+03   0.000000e+00   3.281546e+03     45s
-#> Concurrent spin time: 0.00s
-#> 
-#> Solved with dual simplex
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    64341    3.7230710e+03   0.000000e+00   0.000000e+00     49s
-#> 
-#> Root relaxation: objective 3.723071e+03, 64341 iterations, 48.49 seconds (144.87 work units)
-#> 
-#>     Nodes    |    Current Node    |     Objective Bounds      |     Work
-#>  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
-#> 
-#>      0     0 3723.07098    0 49364 3741.06000 3723.07098  0.48%     -   49s
-#> 
-#> Explored 1 nodes (64433 simplex iterations) in 49.59 seconds (146.66 work units)
-#> Thread count was 9 (of 10 available processors)
-#> 
-#> Solution count 1: 3741.06 
-#> 
-#> Optimal solution found (tolerance 1.00e-01)
-#> Best objective 3.741060000000e+03, best bound 3.723070980814e+03, gap 0.4809%
-
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
-```
-
-![Map of proposed solution with both locked-in and locked-out areas.](figure/unnamed-chunk-7-1.png)
-
-It looks like we got the results we wanted - the locked-in areas were included in the prioritization output as an area to protect, and the locked-out areas were not included!
+![plot of chunk prioritization-plot2](figure/prioritization-plot2-1.png)
 
 # Implement locked-in areas using an `sf` input
 
-To generate our data for this example, we will use data from Bermuda generated via `oceandatr`.
+We can repeat the examples using `sf` input data rather than raster. First we polygonize the raster inputs
 
 
+``` r
+#create the planning grid, which is also the same as the cost grid since we are using planning units all with cost = 1
+pu_sf <- as.polygons(pu_raster, aggregate = FALSE) |>
+  st_as_sf()
 
-We can generate a locked-in layer that would represent an existing MPA.
+features_sf <- as.polygons(fish_distributions, aggregate = FALSE) |>
+  st_as_sf()
 
+seamounts_sf <- as.polygons(seamounts, aggregate = FALSE, na.rm = FALSE) |>
+  st_as_sf()
 
-```r
-# Create a fake MPA
-mpa_location <- create_area(planning_sf, 20, 50)
+#replace NAs with zeroes
+seamounts_sf[is.na(seamounts_sf$Seamounts), "Seamounts"] <- 0
 
-# Plot fake MPA
-plot(mpa_location, main = NULL, border = F)
+locked_area_sf <- as.polygons(locked_area, aggregate = FALSE) |>
+  st_as_sf()
 ```
 
-![Map of potential locked-in areas.](figure/unnamed-chunk-9-1.png)
-
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
+Let's check our features, seamounts and locked-in area look ok:
 
 
-```r
-# Create seamount patches - seamount areas that touch are considered the same patch
-patches_sf <- patchwise::create_patches(seamounts_sf, spatial_grid = planning_sf)
+``` r
+plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf)))
+```
 
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf, locked_in = mpa_location)
-#> [1] "Processing patch 1 of 7"
-#> [1] "Processing patch 2 of 7"
-#> [1] "Processing patch 3 of 7"
-#> [1] "Processing patch 4 of 7"
-#> [1] "Processing patch 5 of 7"
-#> [1] "Processing patch 6 of 7"
-#> [1] "Processing patch 7 of 7"
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
 
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
+Now we can go through the same process of data prepration using `patchwise`, then runnning a prioritization using `prioritizr`
 
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = mpa_location)
 
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
+``` r
+# Create seamount patches
+patches_sf <- create_patches(seamounts_sf, spatial_grid = pu_sf)
 
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_sf <- create_patch_df(spatial_grid = pu_sf, features = features_sf, patches = patches_sf, costs = pu_sf, locked_in = locked_area_sf)
+
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_sf <- features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = locked_area_sf)
+
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_sf <- constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
+
+# Create the prioritization problem
+problem_patches_sf <- problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") |>
+  add_min_set_objective() |>
+  add_manual_targets(constraints_sf) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
 # Solve the prioritization
-solution_sf <- solve(problem_sf)
-#> Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (mac64[arm])
+solution_patches_sf_tbl <- solve(problem_patches_sf)
+#> Set parameter Username
+#> Set parameter LicenseID to value 2865081
+#> Set parameter TimeLimit to value 2147483647
+#> Set parameter MIPGap to value 0.1
+#> Set parameter Presolve to value 2
+#> Set parameter Threads to value 1
+#> Academic license - for non-commercial use only - expires 2027-09-17
+#> Gurobi Optimizer version 13.0.3 build v13.0.3rc0 (linux64 - "Linux Mint 22.3")
 #> 
-#> CPU model: Apple M1 Max
-#> Thread count: 10 physical cores, 10 logical processors, using up to 9 threads
+#> CPU model: Intel(R) Core(TM) i7-8700T CPU @ 2.40GHz, instruction set [SSE2|AVX|AVX2]
+#> Thread count: 6 physical cores, 12 logical processors, using up to 1 threads
 #> 
-#> Optimize a model with 76981 rows, 56170 columns and 218036 nonzeros
-#> Model fingerprint: 0xfea2ae20
-#> Variable types: 0 continuous, 56170 integer (56170 binary)
+#> Non-default parameters:
+#> TimeLimit  2147483647
+#> MIPGap  0.1
+#> Presolve  2
+#> Threads  1
+#> 
+#> Optimize a model with 162 rows, 1603 columns and 3551 nonzeros (Min)
+#> Model fingerprint: 0x87bff6b1
+#> Model has 1603 linear objective coefficients
+#> Variable types: 0 continuous, 1603 integer (1603 binary)
 #> Coefficient statistics:
-#>   Matrix range     [1e+00, 6e+02]
-#>   Objective range  [2e-02, 6e+02]
+#>   Matrix range     [1e+00, 5e+01]
+#>   Objective range  [1e+00, 5e+01]
 #>   Bounds range     [1e+00, 1e+00]
-#>   RHS range        [1e+00, 4e+03]
-#> Found heuristic solution: objective 3732.8950000
-#> Presolve removed 2637 rows and 1617 columns
-#> Presolve time: 0.85s
-#> Presolved: 74344 rows, 54553 columns, 211669 nonzeros
-#> Variable types: 0 continuous, 54553 integer (54553 binary)
-#> Found heuristic solution: objective 3732.8900000
-#> Root relaxation presolve removed 334 rows and 0 columns
-#> Root relaxation presolved: 74010 rows, 54553 columns, 210667 nonzeros
+#>   RHS range        [1e+00, 2e+02]
 #> 
-#> Deterministic concurrent LP optimizer: primal and dual simplex
-#> Showing first log only...
+#> Found heuristic solution: objective 297.0000000
+#> Presolve removed 10 rows and 1438 columns
+#> Presolve time: 0.00s
+#> Presolved: 152 rows, 165 columns, 646 nonzeros
+#> Variable types: 0 continuous, 165 integer (150 binary)
+#> Root relaxation presolved: 152 rows, 165 columns, 646 nonzeros
 #> 
-#> Warning: Markowitz tolerance tightened to 0.25
 #> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    73906    3.7232193e+03   0.000000e+00   2.534610e+03      5s
-#>    84130    3.7226720e+03   0.000000e+00   1.378961e+04     10s
-#>    91314    3.7213965e+03   0.000000e+00   5.732673e+03     15s
-#>    96380    3.7208580e+03   0.000000e+00   9.779234e+02     20s
-#>   101294    3.7206395e+03   0.000000e+00   1.848140e+03     25s
-#>   107134    3.7200285e+03   0.000000e+00   1.159798e+03     30s
-#>   113612    3.7199862e+03   0.000000e+00   2.998862e+03     35s
-#>   117246    3.7199741e+03   0.000000e+00   1.646831e+03     40s
-#>   120256    3.7199589e+03   0.000000e+00   6.978084e+02     45s
-#> Concurrent spin time: 0.00s
-#> 
-#> Solved with dual simplex
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    58008    3.7200450e+03   0.000000e+00   0.000000e+00     50s
-#> 
-#> Root relaxation: objective 3.720045e+03, 58008 iterations, 49.27 seconds (144.48 work units)
+#> Root relaxation: objective 2.302000e+02, 83 iterations, 0.00 seconds (0.00 work units)
 #> 
 #>     Nodes    |    Current Node    |     Objective Bounds      |     Work
 #>  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
 #> 
-#>      0     0 3720.04500    0 50171 3732.89000 3720.04500  0.34%     -   50s
+#>      0     0  230.20000    0   14  297.00000  230.20000  22.5%     -    0s
+#> H    0     0                     239.0000000  230.20000  3.68%     -    0s
 #> 
-#> Explored 1 nodes (58105 simplex iterations) in 50.55 seconds (146.73 work units)
-#> Thread count was 9 (of 10 available processors)
+#> Explored 1 nodes (86 simplex iterations) in 0.01 seconds (0.01 work units)
+#> Thread count was 1 (of 12 available processors)
 #> 
-#> Solution count 2: 3732.89 3732.9 
-#> 
-#> Optimal solution found (tolerance 1.00e-01)
-#> Best objective 3.732890000000e+03, best bound 3.720045002821e+03, gap 0.3441%
-
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, main = NULL, border = F)
-```
-
-![Map of proposed solution with locked-in areas.](figure/unnamed-chunk-10-1.png)
-
-The areas in yellow are those selected by the prioritization for protection. We can clearly see the locked-in area (the yellow square) was included!
-
-
-# Implement locked-out areas using an `sf` input
-
-What if we want to note of an area that we cannot consider for protection? We can include a "locked-out" area. We repeat the example above, but this time we will exclude this area from the prioritization results.
-
-
-```r
-# Create a fake locked-out area
-no_protection <- create_area(planning_sf, 20, 95)
-
-# Plot fake locked-out area
-plot(no_protection, main = NULL, border = F)
-```
-
-![Map of potential locked-out areas.](figure/unnamed-chunk-11-1.png)
-
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
-
-
-```r
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf, locked_out = no_protection)
-#> [1] "Processing patch 1 of 7"
-#> [1] "Processing patch 2 of 7"
-#> [1] "Processing patch 3 of 7"
-#> [1] "Processing patch 4 of 7"
-#> [1] "Processing patch 5 of 7"
-#> [1] "Processing patch 6 of 7"
-#> [1] "Processing patch 7 of 7"
-
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
-
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_sf <- solve(problem_sf)
-#> Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (mac64[arm])
-#> 
-#> CPU model: Apple M1 Max
-#> Thread count: 10 physical cores, 10 logical processors, using up to 9 threads
-#> 
-#> Optimize a model with 76981 rows, 56170 columns and 218035 nonzeros
-#> Model fingerprint: 0x908efcd6
-#> Variable types: 0 continuous, 56170 integer (56170 binary)
-#> Coefficient statistics:
-#>   Matrix range     [1e+00, 6e+02]
-#>   Objective range  [2e-02, 6e+02]
-#>   Bounds range     [1e+00, 1e+00]
-#>   RHS range        [1e+00, 4e+03]
-#> Found heuristic solution: objective 3732.8450000
-#> Presolve removed 2781 rows and 1608 columns
-#> Presolve time: 0.64s
-#> Presolved: 74200 rows, 54562 columns, 211019 nonzeros
-#> Variable types: 0 continuous, 54562 integer (54562 binary)
-#> Root relaxation presolved: 74200 rows, 54562 columns, 211019 nonzeros
-#> 
-#> Deterministic concurrent LP optimizer: primal and dual simplex
-#> Showing first log only...
-#> 
-#> Warning: Markowitz tolerance tightened to 0.5
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    79902    3.7235278e+03   0.000000e+00   1.105348e+03      5s
-#>    88841    3.7209518e+03   0.000000e+00   3.043537e+03     10s
-#>    93297    3.7199971e+03   0.000000e+00   3.033930e+03     15s
-#>    97537    3.7198826e+03   0.000000e+00   6.369931e+02     20s
-#>   101633    3.7198377e+03   0.000000e+00   1.484675e+04     25s
-#>   105681    3.7198301e+03   0.000000e+00   1.369798e+03     30s
-#> Concurrent spin time: 1.31s
-#> 
-#> Solved with dual simplex
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    41579    3.7198669e+03   0.000000e+00   0.000000e+00     32s
-#> 
-#> Root relaxation: objective 3.719867e+03, 41579 iterations, 30.79 seconds (90.95 work units)
-#> 
-#>     Nodes    |    Current Node    |     Objective Bounds      |     Work
-#>  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
-#> 
-#>      0     0 3719.86693    0 49565 3732.84500 3719.86693  0.35%     -   31s
-#> 
-#> Explored 1 nodes (41687 simplex iterations) in 31.89 seconds (92.79 work units)
-#> Thread count was 9 (of 10 available processors)
-#> 
-#> Solution count 1: 3732.85 
+#> Solution count 2: 239 297 
 #> 
 #> Optimal solution found (tolerance 1.00e-01)
-#> Best objective 3.732845000000e+03, best bound 3.719866927108e+03, gap 0.3477%
+#> Best objective 2.390000000000e+02, best bound 2.310000000000e+02, gap 3.3473%
 
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, main = NULL, border = F)
+# Convert the solution into an sf object using the patchwise function `convert_solution()`
+solution_sf_patches <- convert_solution(solution = solution_patches_sf_tbl, patch_df = patches_df_sf, spatial_grid = pu_sf)
 ```
 
-![Map of proposed solution with locked-out areas.](figure/unnamed-chunk-12-1.png)
+For comparison, we will run a prioritization without using `patchwise`
 
-Great! The area that we don't want to include in the solution is removed!
+
+
+We can now plot the solutions, and overlaying the outlines of the seamounts (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The locked-in area is included in both solutions.
+
+
+``` r
+cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patches[, "protected"])) |>
+  setNames(c("Without patchwise", "With patchwise", "geometry")) |>
+  vect() |>
+  plot(1:2,
+       type = "interval",
+       plg = list(legend = c("Not selected", "Selected")),
+       fun = function()lines(as.polygons(seamounts, aggregate = TRUE), col = "red"))
+```
+
+![plot of chunk prioritization-plot-sf](figure/prioritization-plot-sf-1.png)
 
 # Implement locked-in and locked-out areas using an `sf` input
 
-We can also run a scenario in which we have both locked-in and locked-out areas.
+As a final example we will include both a locked-in and a locked-out area. We will use the same data as before, but create a new square area for the locked-out area.
 
 
-```r
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf, locked_in = mpa_location, locked_out = no_protection)
-#> [1] "Processing patch 1 of 7"
-#> [1] "Processing patch 2 of 7"
-#> [1] "Processing patch 3 of 7"
-#> [1] "Processing patch 4 of 7"
-#> [1] "Processing patch 5 of 7"
-#> [1] "Processing patch 6 of 7"
-#> [1] "Processing patch 7 of 7"
+``` r
+locked_out_area <- as.polygons(ext(25, 35, 3, 13)) |>
+  rasterize(pu_raster, background = 0) |>
+  setNames("Locked-out") |>
+  as.polygons(aggregate = FALSE) |>
+  st_as_sf()
+```
 
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
+Plot our data
 
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = mpa_location, locked_out = no_protection)
 
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
+``` r
+plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf), st_drop_geometry(locked_out_area)))
+```
 
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+
+
+
+``` r
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_sf <- create_patch_df(spatial_grid = pu_sf, features = features_sf, patches = patches_sf, costs = pu_sf, locked_in = locked_area_sf, locked_out = locked_out_area)
+
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_sf <- features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = locked_area_sf, locked_out = locked_out_area)
+
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_sf <- constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
+
+# Create the prioritization problem
+problem_patches_sf <- problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") |>
+  add_min_set_objective() |>
+  add_manual_targets(constraints_sf) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
 # Solve the prioritization
-solution_sf <- solve(problem_sf)
-#> Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (mac64[arm])
+solution_patches_sf_tbl <- solve(problem_patches_sf)
+#> Set parameter Username
+#> Set parameter LicenseID to value 2865081
+#> Set parameter TimeLimit to value 2147483647
+#> Set parameter MIPGap to value 0.1
+#> Set parameter Presolve to value 2
+#> Set parameter Threads to value 1
+#> Academic license - for non-commercial use only - expires 2027-09-17
+#> Gurobi Optimizer version 13.0.3 build v13.0.3rc0 (linux64 - "Linux Mint 22.3")
 #> 
-#> CPU model: Apple M1 Max
-#> Thread count: 10 physical cores, 10 logical processors, using up to 9 threads
+#> CPU model: Intel(R) Core(TM) i7-8700T CPU @ 2.40GHz, instruction set [SSE2|AVX|AVX2]
+#> Thread count: 6 physical cores, 12 logical processors, using up to 1 threads
 #> 
-#> Optimize a model with 76982 rows, 56170 columns and 218436 nonzeros
-#> Model fingerprint: 0xf4048946
-#> Variable types: 0 continuous, 56170 integer (56170 binary)
+#> Non-default parameters:
+#> TimeLimit  2147483647
+#> MIPGap  0.1
+#> Presolve  2
+#> Threads  1
+#> 
+#> Optimize a model with 163 rows, 1603 columns and 3651 nonzeros (Min)
+#> Model fingerprint: 0x242e4b84
+#> Model has 1603 linear objective coefficients
+#> Variable types: 0 continuous, 1603 integer (1603 binary)
 #> Coefficient statistics:
-#>   Matrix range     [1e+00, 6e+02]
-#>   Objective range  [2e-02, 6e+02]
+#>   Matrix range     [1e+00, 5e+01]
+#>   Objective range  [1e+00, 5e+01]
 #>   Bounds range     [1e+00, 1e+00]
-#>   RHS range        [1e+00, 4e+03]
-#> Found heuristic solution: objective 3732.9700000
-#> Presolve removed 4318 rows and 2857 columns
-#> Presolve time: 0.81s
-#> Presolved: 72664 rows, 53313 columns, 206757 nonzeros
-#> Variable types: 0 continuous, 53313 integer (53313 binary)
-#> Found heuristic solution: objective 3732.9650000
-#> Root relaxation presolve removed 334 rows and 0 columns
-#> Root relaxation presolved: 72330 rows, 53313 columns, 205755 nonzeros
+#>   RHS range        [1e+00, 2e+02]
 #> 
-#> Deterministic concurrent LP optimizer: primal and dual simplex
-#> Showing first log only...
+#> Found heuristic solution: objective 297.0000000
+#> Presolve removed 11 rows and 1438 columns
+#> Presolve time: 0.00s
+#> Presolved: 152 rows, 165 columns, 646 nonzeros
+#> Variable types: 0 continuous, 165 integer (150 binary)
+#> Root relaxation presolved: 152 rows, 165 columns, 646 nonzeros
 #> 
-#> Warning: Markowitz tolerance tightened to 0.25
 #> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    73407    3.7242230e+03   0.000000e+00   2.207557e+03      5s
-#>    82887    3.7230283e+03   0.000000e+00   1.081976e+03     10s
-#>    94453    3.7219914e+03   0.000000e+00   8.368012e+04     15s
-#>   104318    3.7210228e+03   0.000000e+00   2.816210e+04     20s
-#>   108720    3.7204223e+03   0.000000e+00   8.221710e+03     25s
-#>   113456    3.7203600e+03   0.000000e+00   1.704823e+04     30s
-#>   119904    3.7201420e+03   0.000000e+00   1.317371e+04     35s
-#>   125763    3.7201045e+03   0.000000e+00   1.655345e+03     40s
-#>   128133    3.7200997e+03   0.000000e+00   2.980871e+03     45s
-#>   130433    3.7200965e+03   0.000000e+00   8.521033e+02     50s
-#> Concurrent spin time: 1.78s
-#> 
-#> Solved with dual simplex
-#> 
-#> Root simplex log...
-#> 
-#> Iteration    Objective       Primal Inf.    Dual Inf.      Time
-#>    60783    3.7201850e+03   0.000000e+00   0.000000e+00     51s
-#> 
-#> Root relaxation: objective 3.720185e+03, 60783 iterations, 49.83 seconds (137.67 work units)
+#> Root relaxation: objective 2.313333e+02, 65 iterations, 0.00 seconds (0.00 work units)
 #> 
 #>     Nodes    |    Current Node    |     Objective Bounds      |     Work
 #>  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
 #> 
-#>      0     0 3720.18505    0 48931 3732.96500 3720.18505  0.34%     -   51s
+#>      0     0  231.33333    0    4  297.00000  231.33333  22.1%     -    0s
+#> H    0     0                     232.0000000  231.33333  0.29%     -    0s
+#>      0     0  231.33333    0    4  232.00000  231.33333  0.29%     -    0s
 #> 
-#> Explored 1 nodes (60901 simplex iterations) in 51.06 seconds (139.89 work units)
-#> Thread count was 9 (of 10 available processors)
+#> Explored 1 nodes (65 simplex iterations) in 0.01 seconds (0.01 work units)
+#> Thread count was 1 (of 12 available processors)
 #> 
-#> Solution count 2: 3732.97 3732.97 
+#> Solution count 2: 232 297 
 #> 
 #> Optimal solution found (tolerance 1.00e-01)
-#> Best objective 3.732965000000e+03, best bound 3.720185046242e+03, gap 0.3424%
+#> Best objective 2.320000000000e+02, best bound 2.320000000000e+02, gap 0.0000%
 
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, main = NULL, border = F)
+# Convert the solution into an sf object using the patchwise function `convert_solution()`
+solution_sf_patches <- convert_solution(solution = solution_patches_sf_tbl, patch_df = patches_df_sf, spatial_grid = pu_sf)
 ```
 
-![Map of proposed solution with locked-in and locked-out areas.](figure/unnamed-chunk-13-1.png)
+For comparison, we will run a prioritization without using `patchwise`
 
-It looks like we got the results we wanted - the locked-in areas were included in the prioritization output as an area to protect, and the locked-out areas were not included!
+
+
+The selected planning units all exclude the locked-out area (red outlined square), but include the locked-in area (selected cells in square pattern). The solution using `patchwise` includes a whole seamount (also outlined in red)
+
+
+``` r
+locked_out_area_agg <- vect(locked_out_area) |>
+  aggregate(by = "Locked-out", count = FALSE) |>
+  subset(`Locked-out` == 1, NSE = TRUE)
+
+cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patches[, "protected"])) |>
+  setNames(c("Without patchwise", "With patchwise", "geometry")) |>
+  vect() |>
+  plot(1:2,
+       type = "interval",
+       plg = list(legend = c("Not selected", "Selected")),
+       fun = function()lines(rbind(as.polygons(seamounts, aggregate = TRUE), locked_out_area_agg), col = "red"))
+```
+
+![plot of chunk prioritization-plot-sf2](figure/prioritization-plot-sf2-1.png)
