@@ -13,45 +13,43 @@ features_targets(
 )
 }
 \arguments{
-\item{targets}{a vector of targets for protection (range between 0 and 1); must be the same length as the number of features + the pre-patches variable}
+\item{targets}{a vector of targets for protection (range between 0 and 1);
+must be the same length as the number of features + the pre-patches
+variable}
 
-\item{features}{a raster or sf object that includes all relevant features to be used in the prioritization; each layer of the raster or each column of the sf object identifies the location of each feature}
+\item{features}{a raster or sf object that includes all relevant features to
+be used in the prioritization; each layer of the raster or each column of
+the sf object identifies the location of each feature}
 
-\item{pre_patches}{a raster or sf object that includes the feature that is to be split into patches (not the layer that is already split into patches)}
+\item{pre_patches}{a raster or sf object that includes the feature that is to
+be split into patches (not the layer that is already split into patches)}
 
-\item{locked_out}{a raster or sf object for areas to be locked out (absolutely not protected) in the prioritization}
+\item{locked_out}{a raster or sf object for areas to be locked out
+(absolutely not protected) in the prioritization}
 
-\item{locked_in}{a raster or sf object for areas to be locked in (absolutely protected) in the prioritization}
+\item{locked_in}{a raster or sf object for areas to be locked in (absolutely
+protected) in the prioritization}
 }
 \value{
-A data frame to be used to specify targets for features. Will need to be plugged into \code{constraint_targets()} before being implemented into prioritizr
+A data frame to be used to specify targets for features. Will need to
+be plugged into \code{constraint_targets()} before being implemented into
+prioritizr
 }
 \description{
-This function creates a dataframe of targets for each of the features to be used in the prioritization
+This function creates a dataframe of targets for each of the
+features to be used in the prioritization
 }
 \examples{
-# Start with a little housekeeping to get the data from oceandatr
-# Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
-projection <-'+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
-# Create a planning grid
-planning_raster <- spatialgridr::get_grid(area, projection = projection)
-# Grab all relevant data
-features_raster <- oceandatr::get_features(spatial_grid = planning_raster)
-# Separate seamount data - we want to protect entire patches
-seamounts_raster <- features_raster[["seamounts"]]
-features_raster <- features_raster[[names(features_raster)[names(features_raster) != "seamounts"]]]
-# Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_raster <- stats::setNames(planning_raster, "cost")
-# Create patches from layer
-patches_raster <- create_patches(seamounts_raster)
-# Create patch dataframe
-patches_raster_df <- create_patch_df(spatial_grid = planning_raster, features = features_raster,
-  patches = patches_raster, costs = cost_raster)
-# Create boundary matrix for prioritizr
-boundary_matrix <- create_boundary_matrix(spatial_grid = planning_raster, patches = patches_raster,
-  patch_df = patches_raster_df)
-# Create target features - using just 20\% for every feature
-features_targets <- features_targets(targets = rep(0.2, (terra::nlyr(features_raster)) + 1),
-  features = features_raster, pre_patches = seamounts_raster)
+# Import some planning data
+
+#import species distributions - feature data for planning
+species_distributions <- terra::rast(system.file("extdata/spp_distributions.tif", package = "patchwise"))
+
+#import seamounts
+seamounts <- terra::rast(system.file("extdata/seamounts.tif", package = "patchwise"))
+
+
+# Create targets for protection - use 20\% for each feature (including 20\% of whole seamounts) in this example
+targets_df <- features_targets(targets = rep(0.2, (terra::nlyr(species_distributions) + 1)), features = species_distributions, pre_patches = seamounts)
+head(targets_df)
 }
