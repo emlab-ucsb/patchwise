@@ -1,5 +1,5 @@
-test_that("create constraints - raster", {
-  expect_s3_class(
+test_that("convert solution - raster", {
+  expect_s4_class(
     {pu_raster <- terra::rast(system.file("extdata/pu_raster.tif", package = "patchwise"))
 
     species_distributions <- terra::rast(system.file("extdata/spp_distributions.tif", package = "patchwise"))
@@ -9,13 +9,23 @@ test_that("create constraints - raster", {
     patches_raster <- create_patches(seamounts)
 
     patches_df <- suppressMessages(create_patch_df(spatial_grid = pu_raster, features = species_distributions,
-                                     patches = patches_raster, costs = pu_raster))
+                                                   patches = patches_raster, costs = pu_raster))
 
     targets_df <- features_targets(targets = rep(0.2, (terra::nlyr(species_distributions) + 1)),
                                    features = species_distributions, pre_patches = seamounts)
 
-    constraints_targets(feature_targets = targets_df, patch_df = patches_df)},
-    class = "tbl_df")
+    constraints_df <- constraints_targets(feature_targets = targets_df, patch_df = patches_df)
+
+    problem_patches <- prioritizr::problem(x = patches_df, features = constraints_df$feature, cost_column = "cost") |>
+      prioritizr::add_min_set_objective() |>
+      prioritizr::add_manual_targets(constraints_df) |>
+      prioritizr::add_binary_decisions() |>
+      prioritizr::add_gurobi_solver()
+
+    solution_patches_tbl <- suppressMessages(solve(problem_patches))
+
+    convert_solution(solution = solution_patches_tbl, patch_df = patches_df, spatial_grid = pu_raster)},
+    class = "SpatRaster")
 })
 
 test_that("create constraints - sf", {
@@ -40,10 +50,22 @@ test_that("create constraints - sf", {
     patches_sf <- create_patches(seamounts_sf, spatial_grid = pu_sf)
 
     patches_df <- suppressMessages(create_patch_df(spatial_grid = pu_sf, features = features_sf,
-                                     patches = patches_sf, costs = pu_sf))
+                                                   patches = patches_sf, costs = pu_sf))
 
     targets_df <- features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf)
 
-    constraints_targets(feature_targets = targets_df, patch_df = patches_df)},
-    class = "tbl_df")
+    constraints_df <- constraints_targets(feature_targets = targets_df, patch_df = patches_df)
+
+    problem_patches <- prioritizr::problem(x = patches_df, features = constraints_df$feature, cost_column = "cost") |>
+      prioritizr::add_min_set_objective() |>
+      prioritizr::add_manual_targets(constraints_df) |>
+      prioritizr::add_binary_decisions() |>
+      prioritizr::add_gurobi_solver()
+
+    solution_patches_tbl <- suppressMessages(solve(problem_patches))
+
+    convert_solution(solution = solution_patches_tbl, patch_df = patches_df, spatial_grid = pu_sf)
+
+    },
+    class = "sf")
 })

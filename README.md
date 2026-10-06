@@ -1,214 +1,236 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 # patchwise <a href="https://emlab-ucsb.github.io/patchwise/"><img src="man/figures/logo.png" align="right" height="139" alt="patchwise website" /></a>
 
-`patchwise` is intended to be used as a supplementary package to `oceandatr` (and `spatialgridr`) for instances in which users wish to protect entire "chunks" of areas using `prioritizr`. 
-One example is when a user wishes to include seamounts as a feature to protect in `prioritizr` with a target of 20% protection. Instead of protecting a little bit of each seamount until the 20% is reached, `patchwise` makes it easy to ensure that entire seamounts are protected sequentially to meet the protection target.
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+`patchwise` is intended to be used as a supplementary package to
+`prioritizr` for instances in which users wish to protect entire
+contiguous patches of features rather than portions of many features.
+For example, consider conservation planning for an area of ocean where
+seamounts are one of the biodiversity features that are targeted for
+protection. If the seamounts span multiple planning units and
+representation target of say 20% is used, portions of many seamounts
+could be protected, but it might be better to protect the entirety
+(contiguous patches) of a smaller number of seamounts. `patchwise`
+provides this option, ensuring that representation targets are met by
+representing whole features.
 
 ## Installation
-You can install the development version of `patchwise` from GitHub with:
 
-```
-if (!require(devtools)) install.packages("devtools")
-devtools::install_github("emlab-ucsb/patchwise")
-```
+You can install the development version of `patchwise` from
+[GitHub](https://github.com/) with:
 
-You can install `oceandatr` and `spatialgridr` from GitHub with: 
-
-```
-if (!require(devtools)) install.packages("devtools")
-devtools::install_github("emlab-ucsb/oceandatr")
-devtools::install_github("emlab-ucsb/spatialgridr")
+``` r
+# install.packages("pak")
+pak::pak("emlab-ucsb/patchwise")
 ```
 
-## Examples of usage
+## Example using raster data
 
-### Using `raster` objects as inputs
+First load the libraries needed. Apart from `patchwise`, the `terra`
+package is used for raster data manipulation, and `prioritizr` is used
+for the spatial prioritization.
 
-Since this package is intended to be used in combination with `oceandatr`, there are several housekeeping steps that need to be completed first. 
-
-```
-# Load libraries
+``` r
 library(patchwise)
-
-# Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
-projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
-
-# Create a planning grid
-planning_rast <- spatialgridr::get_grid(area, projection = projection)
-
-# Grab all relevant data
-features_rast <- oceandatr::get_features(spatial_grid = planning_rast)
-
-# Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_rast <- stats::setNames(planning_rast, "cost")
-
-# Separate seamount data - we want to protect entire patches
-seamounts_rast <- features_rast[["seamounts"]]
-features_rast <- features_rast[[names(features_rast)[names(features_rast) != "seamounts"]]]
-
-# Show what seamounts look like... 
-terra::plot(seamounts_rast) # there are 7 seamount areas (seamounts that are touching)
+library(prioritizr)
+library(terra)
 ```
 
-![](https://github.com/echelleburns/patchwise/assets/40546424/7e717d95-4673-4dac-8f59-dbb4865398ea)
+We will import some basic planning data to demonstrate how `patchwise`
+can be used. For this example we will use a a 40 x 40 raster planning
+grid which has a cost value of 1 for each cell, and the following
+features that will be targeted in the prioritization:
 
-```
-# Create seamount patches - seamount areas that touch are considered the same patch
-patches_rast <- patchwise::create_patches(seamounts_rast)
+- 4 random, binary (0 or 1) data layers, representing species
+  distributions; for this example we are calling them fish
+- 3 “patches” of contiguous features; for this example we are calling
+  them seamounts
 
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast)
+``` r
+#import planning units/ cost raster
+pu_raster <- rast(system.file("extdata/pu_raster.tif", package = "patchwise"))
 
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
+#import fish distributions
+fish_distributions <- rast(system.file("extdata/spp_distributions.tif", package = "patchwise"))
 
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
-
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_rast <- solve(problem_rast)
-
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
+#import seamounts
+seamounts <- rast(system.file("extdata/seamounts.tif", package = "patchwise"))
 ```
 
-![](https://github.com/emlab-ucsb/patchwise/assets/40546424/82d88030-e915-4fde-a3ec-a99b62ff596d)
+Let’s look at our fish distributions and our seamounts
 
-
-Areas in green were identified by `prioritizr` as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a `prioritizr` run that does not protect whole seamounts: 
-
-```
-# Grab all relevant data
-features_rast_nopatch <- oceandatr::get_features(spatial_grid = planning_rast)
-
-# Run the prioritization
-problem_rast_nopatch <- prioritizr::problem(x = cost_rast, features = features_rast_nopatch) %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_relative_targets(rep(0.2, terra::nlyr(features_rast_nopatch))) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_nopatch <- solve(problem_rast_nopatch)
-
-# Show the results
-terra::plot(solution_nopatch)
+``` r
+plot(c(fish_distributions, seamounts))
 ```
 
-![](https://github.com/emlab-ucsb/patchwise/assets/40546424/0d27f6df-32e4-49ff-abbc-720b930c26d4)
+<img src="man/figures/README-visualize-data-1.png" alt="" width="100%" />
 
-Only portions of seamount units are protected here.
+Now we can use `patchwise` to do some pre-processing of the seamounts
+data so the seamounts can be prioritized as whole patches in the
+following prioritization.
 
-### Using `sf` objects as inputs
+``` r
+# Create seamount patches 
+patches_rast <- create_patches(seamounts)
 
-Since this package is intended to be used in combination with `oceandatr`, there are several housekeeping steps that need to be completed first. 
-
-```
-# Load libraries
-library(patchwise)
-
-# Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
-projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
-
-# Create a planning grid
-planning_sf <- spatialgridr::get_grid(area, projection = projection, option = "sf_square")
-
-# Grab all relevant data
-features_sf <- oceandatr::get_features(spatial_grid = planning_sf)
-
-# Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_sf <- features_sf %>%
-  dplyr::mutate(cost = 1) %>%
-  dplyr::select(cost)
-
-# Separate seamount data - we want to protect entire patches
-seamounts_sf <- features_sf %>% 
-  dplyr::select(seamounts)
-
-features_sf <- features_sf %>% 
-  dplyr::select(-seamounts)
-
-# Show what seamounts look like... 
-plot(seamounts_sf, border = F) # there are 7 seamount areas (seamounts that are touching)
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected 
+patches_df_rast <- create_patch_df(spatial_grid = pu_raster, features = fish_distributions, patches = patches_rast, costs = pu_raster)
+#> Processing patch 1 of 3
+#> Processing patch 2 of 3
+#> Processing patch 3 of 3
 ```
 
-![](https://github.com/emlab-ucsb/patchwise/assets/40546424/892e0ee5-6791-4fb7-acac-6e3fcb8718b0)
+With that pre-processing done, we can now use `patchwise` to create
+protection targets for our features, including seamounts. In this
+example, we will use 20%, including 20% of whole seamounts.
 
-```
-# Create seamount patches - seamount areas that touch are considered the same patch
-patches_sf <- patchwise::create_patches(seamounts_sf, spatial_grid = planning_sf)
+``` r
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_rast <- features_targets(targets = rep(0.2, (nlyr(fish_distributions) + 1)), features = fish_distributions, pre_patches = seamounts)
 
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf)
-
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
-
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_sf <- solve(problem_sf)
-
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, border = F)
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_rast <- constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
 ```
 
-![](https://github.com/emlab-ucsb/patchwise/assets/40546424/4fe72641-1693-43f5-a317-b86d30e7c54c)
+With all the data preparation now done, we can run a prioritization
+using `prioritizr`:
 
-Areas in yellow were identified by `prioritizr` as areas worth protecting. We can see that entire seamounts were used to meet the target objective of protecting 20% of seamounts. We can compare this result to a `prioritizr` run that does not protect whole seamounts: 
+The solution object is a tibble. To convert this into a raster object
+for plotting, we use the `convert_solution()` function from `patchwise`
 
-```
-# Grab all relevant data
-features_sf_nopatch <- oceandatr::get_features(spatial_grid = planning_sf) %>% 
-  dplyr::mutate(cost = 1) %>% # create a cost column
-  dplyr::relocate(cost, .before = x) # make sure cost column is before geometry column
-
-# Run the prioritization
-problem_sf_nopatch <- prioritizr::problem(x = features_sf_nopatch, features = names(features_sf_nopatch)[1:(ncol(features_sf_nopatch)-1)], cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_relative_targets(rep(0.2, ncol(features_sf_nopatch)-1)) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_sf_nopatch <- solve(problem_sf_nopatch)
-
-# Show the results
-plot(solution_sf_nopatch %>% dplyr::select(solution_1), border = F)
+``` r
+# Convert the solution into a raster using the patchwise function `convert_solution()`
+sol_rast_patches <- convert_solution(solution = solution_patches_tbl, patch_df = patches_df_rast, spatial_grid = pu_raster) |>
+  setNames("With patchwise")
 ```
 
-![](https://github.com/emlab-ucsb/patchwise/assets/40546424/a4fee456-4206-4668-bd61-76e22b8b0222)
+For comparison, we will run a prioritization without using `patchwise`
 
-Only portions of seamount units are protected here.
+We can now plot the solutions, and overlaying the outlines of the
+seamounts (in red), we can see that one entire seamount is included in
+the solution that used `patchwise`, whereas the solution without
+`patchwise` selects a few planning units in each seamount. Note that in
+the solution with `patchwise`, planning units that overlap seamounts
+that are not entirely selected have also been selected to meet targets
+for other features (fish distributions).
+
+``` r
+plot(c(solution_no_patches, sol_rast_patches), 
+     fun = function()lines(as.polygons(seamounts), col = "red"),
+     plg = list(legend = c("Not selected", "Selected")))
+```
+
+<img src="man/figures/README-prioritization-plot-1.png" alt="" width="100%" />
+
+If you want to use a boundary penalty in the prioritization, we need to
+manually create a boundary matrix using the `patchwise` function
+`create_boundary_matrix()`
+
+``` r
+boundary_matrix_rast <- create_boundary_matrix(spatial_grid = pu_raster, patches = patches_rast, patch_df = patches_df_rast)
+```
+
+We can now re-run the prioritization with a boundary penalty
+
+We now get a solution with planning units more clustered together
+
+``` r
+plot(solution_rast_boundary, plg = list(legend = c("Not selected", "Selected")))
+lines(as.polygons(seamounts), col = "red")
+```
+
+<img src="man/figures/README-prioritization-boundary-plot-1.png" alt="" width="100%" />
+
+## Example with sf data
+
+The previous example used raster input data for the prioritization, but
+`patchwise` also handles `sf` data.
+
+``` r
+library(sf)
+```
+
+First we need to create suitable `sf` data inputs. We can do this by
+polygonizing the raster data:
+
+``` r
+#create the planning grid, which is also the same as the cost grid since we are using planning units all with cost = 1
+pu_sf <- as.polygons(pu_raster, aggregate = FALSE) |> 
+  st_as_sf()
+
+features_sf <- as.polygons(fish_distributions, aggregate = FALSE) |> 
+  st_as_sf()
+
+seamounts_sf <- as.polygons(seamounts, aggregate = FALSE, na.rm = FALSE) |> 
+  st_as_sf()
+
+#replace NAs with zeroes
+seamounts_sf[is.na(seamounts_sf$Seamounts), "Seamounts"] <- 0
+```
+
+Let’s check our features and seamounts look ok:
+
+``` r
+plot(cbind(features_sf, st_drop_geometry(seamounts_sf)))
+```
+
+<img src="man/figures/README-unnamed-chunk-5-1.png" alt="" width="100%" />
+
+Now we can run the same `patchwise` functions as we did with raster data
+to prepare the data for prioritization
+
+``` r
+
+# Create seamount patches
+patches_sf <- create_patches(seamounts_sf, spatial_grid = pu_sf)
+
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected 
+patches_df_sf <- create_patch_df(spatial_grid = pu_sf, features = features_sf, patches = patches_sf, costs = pu_sf)
+#> Processing patch 1 of 3
+#> Processing patch 2 of 3
+#> Processing patch 3 of 3
+
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_sf <- features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf)
+
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_sf <- constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
+```
+
+With all the data preparation now done, we can run a prioritization
+using `prioritizr`:
+
+The solution object is a tibble. To convert this into a raster object
+for plotting, we use the `convert_solution()` function from `patchwise`
+
+``` r
+# Convert the solution into an sf object using the patchwise function `convert_solution()`
+solution_sf_patches <- convert_solution(solution = solution_patches_sf_tbl, patch_df = patches_df_sf, spatial_grid = pu_sf) 
+```
+
+For comparison, we will run a prioritization without using `patchwise`
+
+We can now plot the solutions, and overlaying the outlines of the
+seamounts (in red), we can see that one entire seamount is included in
+the solution that used `patchwise`, whereas the solution without
+`patchwise` selects a few planning units in each seamount. Note that in
+the solution with `patchwise`, planning units that overlap seamounts
+that are not entirely selected have also been selected to meet targets
+for other features (fish distributions).
+
+``` r
+cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patches[, "protected"])) |> 
+  setNames(c("Without patchwise", "With patchwise", "geometry")) |> 
+  vect() |> 
+  plot(1:2, 
+       type = "interval",
+       plg = list(legend = c("Not selected", "Selected")),
+       fun = function()lines(as.polygons(seamounts, aggregate = TRUE), col = "red"))
+```
+
+<img src="man/figures/README-prioritization-plot-sf-1.png" alt="" width="100%" />

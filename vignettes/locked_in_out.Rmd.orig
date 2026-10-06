@@ -34,367 +34,314 @@ A quick note about `prioritizr` - sometimes there are several cells that are equ
 
 To generate our data for this example, we will use data from Bermuda generated via `oceandatr`.
 
-```{r}
+```{r message=FALSE}
 # Load libraries
 library(patchwise)
-
-# Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
-projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
-
-# Create a planning grid
-planning_rast <- spatialgridr::get_grid(area, projection = projection)
-
-# Grab all relevant data
-features_rast <- oceandatr::get_features(spatial_grid = planning_rast)
-
-# Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_rast <- stats::setNames(planning_rast, "cost")
-
-# Separate seamount data - we want to protect entire patches
-seamounts_rast <- features_rast[["seamounts"]]
-features_rast <- features_rast[[names(features_rast)[names(features_rast) != "seamounts"]]]
+library(terra)
+library(sf)
+library(prioritizr)
 ```
 
-We can generate a locked-in layer that would represent an existing MPA.
+We will import some basic planning data, same as in the `patchwise` readme. For this example we will use a a 40 x 40 raster planning grid which has a cost value of 1 for each cell, and the following features that will be targeted in the prioritization:
+
+- 4 random, binary (0 or 1) data layers, representing species distributions; for this example we are calling them fish
+- 3 "patches" of contiguous features; for this example we are calling them seamounts
+
+```{r data-setup}
+#import planning units/ cost raster
+pu_raster <- rast(system.file("extdata/pu_raster.tif", package = "patchwise"))
+
+#import fish distributions
+fish_distributions <- rast(system.file("extdata/spp_distributions.tif", package = "patchwise"))
+
+#import seamounts
+seamounts <- rast(system.file("extdata/seamounts.tif", package = "patchwise"))
+```
+
+We will generate a square within our planning area that will be used as our locked in area
 
 ```{r}
-# Create a function to produce a square area
-create_area <- function(spatial_grid, mpa_size, edge_offset) {
-  if(class(spatial_grid)[1] %in% c("RasterLayer", "SpatRaster")) {
-    terra::rast(spatial_grid,
-                vals = c(rep(NA, (terra::ncol(spatial_grid)*edge_offset)),
-                         rep(c(rep(NA, edge_offset),
-                               rep(1, mpa_size),
-                               rep(NA, (terra::ncol(spatial_grid)-(edge_offset+mpa_size)))),
-                             mpa_size),
-                         rep(NA, (terra::ncol(spatial_grid)*(terra::nrow(spatial_grid)-edge_offset-mpa_size)))))
-  } else if(class(spatial_grid)[1] == "sf") {
-    sf_to_grid <- sf::st_make_grid(spatial_grid, cellsize = sqrt(sf::st_area(spatial_grid[1,])))
-    sf_centroid <- sf::st_centroid(sf_to_grid) %>%
-      sf::st_coordinates(.) %>%
-      as.data.frame() %>%
-      dplyr::mutate(X = round(X, digits = 4),
-                    Y = round(Y, digits = 4))
-
-    # sf::st_make_grid changes the orientation of how cells are read - change them back
-    sf_to_grid <- sf_to_grid %>%
-      as.data.frame() %>%
-      dplyr::bind_cols(sf_centroid) %>%
-      dplyr::arrange(dplyr::desc(Y), X) %>%
-      dplyr::select(-X, -Y)
-
-    cols_sf_to_grid <- length(unique(sf_centroid$X))
-    rows_sf_to_grid <- length(unique(sf_centroid$Y))
-
-    sf_to_grid <- sf_to_grid %>%
-      sf::st_sf() %>%
-      dplyr::mutate(layer = c(rep(NA, (cols_sf_to_grid*edge_offset)),
-                         rep(c(rep(NA, edge_offset),
-                               rep(1, mpa_size),
-                               rep(NA, (cols_sf_to_grid-(edge_offset+mpa_size)))),
-                             mpa_size),
-                         rep(NA, (cols_sf_to_grid*(rows_sf_to_grid-edge_offset-mpa_size)))))
-
-    # the planning sf only includes polygons for the planning area (we need to remove them) so the number of cells matches the planning grid
-    sf_to_grid <- sf_to_grid[sf_to_grid$geometry %in% spatial_grid[[1]], ]
-    rownames(sf_to_grid) <- NULL
-    sf_to_grid %>%
-      dplyr::relocate(layer, 1)
-    }
-}
+locked_area <- as.polygons(ext(5, 15, 25, 35)) |>
+  rasterize(pu_raster, background = 0) |>
+  setNames("Locked-in")
 ```
 
-```{r fig.cap = "Map of potential locked-in areas."}
-# Create a fake MPA
-mpa_location <- create_area(planning_rast, 20, 50)
+Let's look at our fish distributions, seamounts and locked-in area:
 
-# Plot fake MPA
-terra::plot(mpa_location)
+```{r visualize-data}
+plot(c(fish_distributions, seamounts, locked_area))
 ```
 
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
 
-```{r fig.cap = "Map of proposed solution with locked-in areas."}
-# Create seamount patches - seamount areas that touch are considered the same patch
-patches_rast <- patchwise::create_patches(seamounts_rast)
+Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts) - this is the same process as shown in the main `patchwise` readme, but with the locked-in area.
 
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast, locked_in = mpa_location)
+```{r message=FALSE}
+# Create seamount patches
+patches_rast <- create_patches(seamounts)
 
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_rast <- create_patch_df(spatial_grid = pu_raster, features = fish_distributions, patches = patches_rast, costs = pu_raster, locked_in = locked_area)
 
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast, locked_in = mpa_location)
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_rast <- features_targets(targets = rep(0.2, (nlyr(fish_distributions) + 1)), features = fish_distributions, pre_patches = seamounts, locked_in = locked_area)
 
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_rast <- constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
+```
 
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
+With all the data preparation now done, we can run a prioritization using `prioritizr`:
+
+```{r prioritization, include=FALSE}
+# Create the prioritization problem
+problem_patches <- problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") |>
+  add_min_set_objective() |>
+  add_manual_targets(constraints_rast) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
 # Solve the prioritization
-solution_rast <- solve(problem_rast)
+solution_patches_tbl <- solve(problem_patches)
 
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
+# Convert the solution into a raster using the patchwise function `convert_solution()`
+sol_rast_patches <- convert_solution(solution = solution_patches_tbl, patch_df = patches_df_rast, spatial_grid = pu_raster) |>
+  setNames("With patchwise")
 ```
 
-The areas in green are those selected by the prioritization for protection. We can clearly see the locked-in area (the green square) was included!
+For comparison, we will run a prioritization without using `patchwise`
+
+```{r prioritization-no-patches, include=FALSE}
+features_rast <- c(fish_distributions, seamounts)
+
+problem_no_patches <- problem(x = pu_raster, features = features_rast) |>
+  add_locked_in_constraints(locked_area) |>
+  add_min_set_objective() |>
+  add_relative_targets(0.2) |>
+  add_binary_decisions() |>
+  add_default_solver()
+
+# Solve the prioritization
+solution_no_patches <- solve(problem_no_patches) |>
+  setNames("Without patchwise")
+```
+
+We can now plot the solutions, and overlaying the outlines of the seamounts (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The square, locked-in area is included in both scenarios.
+
+```{r prioritization-plot}
+plot(c(solution_no_patches, sol_rast_patches),
+     fun = function()lines(as.polygons(seamounts), col = "red"),
+     plg = list(legend = c("Not selected", "Selected")))
+```
 
 # Implement locked-out areas using a `raster` input
 
-What if we want to note of an area that we cannot consider for protection? We can include a "locked-out" area. We repeat the example above, but this time we will exclude this area from the prioritization results.
+What if we want to note of an area that we cannot consider for protection? We can include a "locked-out" area. We repeat the example above, but this time we will exclude the "locked_area" from the prioritization results.
 
-```{r fig.cap = "Map of potential locked-out areas."}
-# Create a fake locked-out area
-no_protection <- create_area(planning_rast, 20, 95)
+```{r include=FALSE}
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_rast <- create_patch_df(spatial_grid = pu_raster, features = fish_distributions, patches = patches_rast, costs = pu_raster, locked_out = locked_area)
 
-# Plot fake locked-out area
-terra::plot(no_protection)
-```
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_rast <- features_targets(targets = rep(0.2, (nlyr(fish_distributions) + 1)), features = fish_distributions, pre_patches = seamounts, locked_out = locked_area)
 
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_rast <- constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
 
-```{r fig.cap = "Map of proposed solution with locked-out areas."}
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast, locked_out = no_protection)
-
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
-
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
+# Create the prioritization problem
+problem_patches <- problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") |>
+  add_min_set_objective() |>
+  add_manual_targets(constraints_rast) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
 # Solve the prioritization
-solution_rast <- solve(problem_rast)
+solution_patches_tbl <- solve(problem_patches)
 
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
-```
-
-Great! The area that we don't want to include in the solution is removed!
-
-# Implement locked-in and locked-out areas using a `raster` input
-
-We can also run a scenario in which we have both locked-in and locked-out areas.
-
-```{r fig.cap = "Map of proposed solution with both locked-in and locked-out areas."}
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_rast <- patchwise::create_patch_df(spatial_grid = planning_rast, features = features_rast, patches = patches_rast, costs = cost_rast, locked_in = mpa_location, locked_out = no_protection)
-
-# Create boundary matrix for prioritizr
-boundary_matrix_rast <- patchwise::create_boundary_matrix(spatial_grid = planning_rast, patches = patches_rast, patch_df = patches_df_rast)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_rast <- patchwise::features_targets(targets = rep(0.2, (terra::nlyr(features_rast) + 1)), features = features_rast, pre_patches = seamounts_rast, locked_in = mpa_location, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_rast <- patchwise::constraints_targets(feature_targets = targets_rast, patch_df = patches_df_rast)
-
-# Run the prioritization
-problem_rast <- prioritizr::problem(x = patches_df_rast, features = constraints_rast$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_rast) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_rast) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
+# Convert the solution into a raster using the patchwise function `convert_solution()`
+sol_rast_patches <- convert_solution(solution = solution_patches_tbl, patch_df = patches_df_rast, spatial_grid = pu_raster) |>
+  setNames("With patchwise")
+problem_no_patches <- problem(x = pu_raster, features = features_rast) |>
+  add_locked_out_constraints(locked_area) |>
+  add_min_set_objective() |>
+  add_relative_targets(0.2) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
 # Solve the prioritization
-solution_rast <- solve(problem_rast)
-
-# Convert the prioritization into a more digestible format
-result_rast <- patchwise::convert_solution(solution = solution_rast, patch_df = patches_df_rast, spatial_grid = planning_rast)
-
-# Show the results
-terra::plot(result_rast)
+solution_no_patches <- solve(problem_no_patches) |>
+  setNames("Without patchwise")
 ```
 
-It looks like we got the results we wanted - the locked-in areas were included in the prioritization output as an area to protect, and the locked-out areas were not included!
+We can now plot the solutions, and overlaying the outlines of the seamounts and locked-out area (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The square, locked-out area (red outline) is excluded in both scenarios.
+
+```{r prioritization-plot2}
+plot(c(solution_no_patches, sol_rast_patches),
+     fun = function()lines(rbind(as.polygons(seamounts), as.polygons(locked_area)), col = "red"),
+     plg = list(legend = c("Not selected", "Selected")))
+```
 
 # Implement locked-in areas using an `sf` input
 
-To generate our data for this example, we will use data from Bermuda generated via `oceandatr`.
+We can repeat the examples using `sf` input data rather than raster. First we polygonize the raster inputs
 
-```{r include=FALSE}
-# Load libraries
-library(patchwise)
+```{r}
+#create the planning grid, which is also the same as the cost grid since we are using planning units all with cost = 1
+pu_sf <- as.polygons(pu_raster, aggregate = FALSE) |>
+  st_as_sf()
 
-# Choose area of interest (Bermuda EEZ)
-area <- oceandatr::get_area(area_name = "Bermuda",  mregions_column = "territory1")
-projection <- '+proj=laea +lon_0=-64.8108333 +lat_0=32.3571917 +datum=WGS84 +units=m +no_defs'
+features_sf <- as.polygons(fish_distributions, aggregate = FALSE) |>
+  st_as_sf()
 
-# Create a planning grid
-planning_sf <- spatialgridr::get_grid(area, projection = projection, option = "sf_square")
+seamounts_sf <- as.polygons(seamounts, aggregate = FALSE, na.rm = FALSE) |>
+  st_as_sf()
 
-# Grab all relevant data
-features_sf <- oceandatr::get_features(spatial_grid = planning_sf)
+#replace NAs with zeroes
+seamounts_sf[is.na(seamounts_sf$Seamounts), "Seamounts"] <- 0
 
-# Create a "cost" to protecting a cell - just a uniform cost for this example
-cost_sf <- features_sf %>%
-  dplyr::mutate(cost = 1) %>%
-  dplyr::select(cost)
-
-# Separate seamount data - we want to protect entire patches
-seamounts_sf <- features_sf %>%
-  dplyr::select(seamounts)
-
-features_sf <- features_sf %>%
-  dplyr::select(-seamounts)
+locked_area_sf <- as.polygons(locked_area, aggregate = FALSE) |>
+  st_as_sf()
 ```
 
-We can generate a locked-in layer that would represent an existing MPA.
+Let's check our features, seamounts and locked-in area look ok:
 
-```{r fig.cap = "Map of potential locked-in areas."}
-# Create a fake MPA
-mpa_location <- create_area(planning_sf, 20, 50)
-
-# Plot fake MPA
-plot(mpa_location, main = NULL, border = F)
+```{r}
+plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf)))
 ```
 
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
+Now we can go through the same process of data prepration using `patchwise`, then runnning a prioritization using `prioritizr`
 
-```{r fig.cap = "Map of proposed solution with locked-in areas."}
-# Create seamount patches - seamount areas that touch are considered the same patch
-patches_sf <- patchwise::create_patches(seamounts_sf, spatial_grid = planning_sf)
+```{r patchwise-prep-sf}
+# Create seamount patches
+patches_sf <- create_patches(seamounts_sf, spatial_grid = pu_sf)
 
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf, locked_in = mpa_location)
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_sf <- create_patch_df(spatial_grid = pu_sf, features = features_sf, patches = patches_sf, costs = pu_sf, locked_in = locked_area_sf)
 
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_sf <- features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = locked_area_sf)
 
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = mpa_location)
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_sf <- constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
 
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
-
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
+# Create the prioritization problem
+problem_patches_sf <- problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") |>
+  add_min_set_objective() |>
+  add_manual_targets(constraints_sf) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
 # Solve the prioritization
-solution_sf <- solve(problem_sf)
+solution_patches_sf_tbl <- solve(problem_patches_sf)
 
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, main = NULL, border = F)
+# Convert the solution into an sf object using the patchwise function `convert_solution()`
+solution_sf_patches <- convert_solution(solution = solution_patches_sf_tbl, patch_df = patches_df_sf, spatial_grid = pu_sf)
 ```
 
-The areas in yellow are those selected by the prioritization for protection. We can clearly see the locked-in area (the yellow square) was included!
+For comparison, we will run a prioritization without using `patchwise`
 
+```{r prioritization-no-patches-sf, include=FALSE}
+sf_planning_data <- cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(pu_sf), st_drop_geometry(locked_area_sf)>0) #prioritizr needs TRUE/ FALSE for the locked-in column
 
-# Implement locked-out areas using an `sf` input
+problem_no_patches_sf <- problem(x = sf_planning_data,
+                              features = names(subset(st_drop_geometry(sf_planning_data), select = -c(cost, Locked.in))),
+                              cost_column = "cost") |>
+  add_locked_in_constraints("Locked.in") |>
+  add_min_set_objective() |>
+  add_relative_targets(0.2) |>
+  add_binary_decisions() |>
+  add_default_solver()
 
-What if we want to note of an area that we cannot consider for protection? We can include a "locked-out" area. We repeat the example above, but this time we will exclude this area from the prioritization results.
-
-```{r fig.cap = "Map of potential locked-out areas."}
-# Create a fake locked-out area
-no_protection <- create_area(planning_sf, 20, 95)
-
-# Plot fake locked-out area
-plot(no_protection, main = NULL, border = F)
+solution_no_patches_sf <- solve(problem_no_patches_sf)
 ```
 
-Now we can continue using `patchwise` to group seamount areas so that entire seamount ranges are protected (and not portions of seamounts).
+We can now plot the solutions, and overlaying the outlines of the seamounts (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The locked-in area is included in both solutions.
 
-```{r fig.cap = "Map of proposed solution with locked-out areas."}
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf, locked_out = no_protection)
-
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
-
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_sf <- solve(problem_sf)
-
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, main = NULL, border = F)
+```{r prioritization-plot-sf}
+cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patches[, "protected"])) |>
+  setNames(c("Without patchwise", "With patchwise", "geometry")) |>
+  vect() |>
+  plot(1:2,
+       type = "interval",
+       plg = list(legend = c("Not selected", "Selected")),
+       fun = function()lines(as.polygons(seamounts, aggregate = TRUE), col = "red"))
 ```
-
-Great! The area that we don't want to include in the solution is removed!
 
 # Implement locked-in and locked-out areas using an `sf` input
 
-We can also run a scenario in which we have both locked-in and locked-out areas.
+As a final example we will include both a locked-in and a locked-out area. We will use the same data as before, but create a new square area for the locked-out area.
 
-```{r fig.cap = "Map of proposed solution with locked-in and locked-out areas."}
-# Create patches dataframe - this creates several constraints so that entire seamount units are protected together
-patches_df_sf <- patchwise::create_patch_df(spatial_grid = planning_sf, features = features_sf, patches = patches_sf, costs = cost_sf, locked_in = mpa_location, locked_out = no_protection)
-
-# Create boundary matrix for prioritizr
-boundary_matrix_sf <- patchwise::create_boundary_matrix(spatial_grid = planning_sf, patches = patches_sf, patch_df = patches_df_sf)
-
-# Create targets for protection - let's just do 20% for each feature (including 20% of whole seamounts)
-targets_sf <- patchwise::features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = mpa_location, locked_out = no_protection)
-
-# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount units
-constraints_sf <- patchwise::constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
-
-# Run the prioritization
-problem_sf <- prioritizr::problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") %>%
-  prioritizr::add_min_set_objective() %>%
-  prioritizr::add_manual_targets(constraints_sf) %>%
-  prioritizr::add_binary_decisions() %>%
-  prioritizr::add_boundary_penalties(penalty = 0.000002, data = boundary_matrix_sf) %>%
-  prioritizr::add_default_solver(gap = 0.1, threads = parallel::detectCores()-1)
-
-# Solve the prioritization
-solution_sf <- solve(problem_sf)
-
-# Convert the prioritization into a more digestible format
-result_sf <- patchwise::convert_solution(solution = solution_sf, patch_df = patches_df_sf, spatial_grid = planning_sf)
-
-# Show the results
-plot(result_sf, main = NULL, border = F)
+```{r}
+locked_out_area <- as.polygons(ext(25, 35, 3, 13)) |>
+  rasterize(pu_raster, background = 0) |>
+  setNames("Locked-out") |>
+  as.polygons(aggregate = FALSE) |>
+  st_as_sf()
 ```
 
-It looks like we got the results we wanted - the locked-in areas were included in the prioritization output as an area to protect, and the locked-out areas were not included!
+Plot our data
+
+```{r}
+plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf), st_drop_geometry(locked_out_area)))
+```
+
+
+```{r patchwise-prep-sf2}
+# Create patches dataframe - this creates constraints so that entire seamount patches are protected
+patches_df_sf <- create_patch_df(spatial_grid = pu_sf, features = features_sf, patches = patches_sf, costs = pu_sf, locked_in = locked_area_sf, locked_out = locked_out_area)
+
+# Create targets for protection - 20% for each feature (including 20% of whole seamounts)
+targets_sf <- features_targets(targets = rep(0.2, ncol(features_sf)), features = features_sf, pre_patches = seamounts_sf, locked_in = locked_area_sf, locked_out = locked_out_area)
+
+# Add these targets to targets for protection for the "constraints" we introduced to protect entire seamount patches
+constraints_sf <- constraints_targets(feature_targets = targets_sf, patch_df = patches_df_sf)
+
+# Create the prioritization problem
+problem_patches_sf <- problem(x = patches_df_sf, features = constraints_sf$feature, cost_column = "cost") |>
+  add_min_set_objective() |>
+  add_manual_targets(constraints_sf) |>
+  add_binary_decisions() |>
+  add_default_solver()
+
+# Solve the prioritization
+solution_patches_sf_tbl <- solve(problem_patches_sf)
+
+# Convert the solution into an sf object using the patchwise function `convert_solution()`
+solution_sf_patches <- convert_solution(solution = solution_patches_sf_tbl, patch_df = patches_df_sf, spatial_grid = pu_sf)
+```
+
+For comparison, we will run a prioritization without using `patchwise`
+
+```{r prioritization-no-patches-sf2, include=FALSE}
+sf_planning_data <- cbind(features_sf,
+                          st_drop_geometry(seamounts_sf),
+                          st_drop_geometry(pu_sf),
+                          st_drop_geometry(locked_area_sf)>0,
+                          st_drop_geometry(locked_out_area)>0) #prioritizr needs TRUE/ FALSE for the locked-in column
+
+problem_no_patches_sf <- problem(x = sf_planning_data,
+                              features = names(subset(st_drop_geometry(sf_planning_data), select = -c(cost, Locked.in, Locked.out))),
+                              cost_column = "cost") |>
+  add_locked_in_constraints("Locked.in") |>
+  add_locked_out_constraints("Locked.out") |>
+  add_min_set_objective() |>
+  add_relative_targets(0.2) |>
+  add_binary_decisions() |>
+  add_default_solver()
+
+solution_no_patches_sf <- solve(problem_no_patches_sf)
+```
+
+The selected planning units all exclude the locked-out area (red outlined square), but include the locked-in area (selected cells in square pattern). The solution using `patchwise` includes a whole seamount (also outlined in red)
+
+```{r prioritization-plot-sf2}
+locked_out_area_agg <- vect(locked_out_area) |>
+  aggregate(by = "Locked-out", count = FALSE) |>
+  subset(`Locked-out` == 1, NSE = TRUE)
+
+cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patches[, "protected"])) |>
+  setNames(c("Without patchwise", "With patchwise", "geometry")) |>
+  vect() |>
+  plot(1:2,
+       type = "interval",
+       plg = list(legend = c("Not selected", "Selected")),
+       fun = function()lines(rbind(as.polygons(seamounts, aggregate = TRUE), locked_out_area_agg), col = "red"))
+```
