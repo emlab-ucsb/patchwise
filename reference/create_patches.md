@@ -1,0 +1,45 @@
+# Create patches for a specific feature
+
+This function takes a feature and splits it into multiple "patches" of
+the feature. This is ideal for features that you want to protect x% of,
+but want to make sure that entire patches (as opposed to pieces of
+patches) are protected to meet that target.
+
+## Usage
+
+``` r
+create_patches(feature, spatial_grid = NULL)
+```
+
+## Arguments
+
+- feature:
+
+  a raster or sf object with the feature of interest present (value = 1)
+  or absent (value = NA)
+
+- spatial_grid:
+
+  a raster or sf template with the desired resolution and coordinate
+  reference system generated; values in areas of interest are 1, while
+  all other values are NA (only required if feature is a sf object)
+
+## Value
+
+A raster or sf object with independent layers (raster)/columns (sf)
+designating the location of each patch
+
+## Examples
+
+``` r
+# Import some planning data
+#import seamounts
+seamounts <- terra::rast(system.file("extdata/seamounts.tif", package = "patchwise"))
+
+terra::plot(seamounts)
+
+
+# Create seamount patches as multi-layer raster
+patches_raster <- create_patches(seamounts)
+terra::plot(patches_raster)
+```
