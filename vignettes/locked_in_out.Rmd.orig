@@ -1,7 +1,6 @@
 ---
 title: "Using patchwise with locked-in and locked-out areas"
 output: rmarkdown::html_vignette
-fig_caption: false
 vignette: >
   %\VignetteIndexEntry{Using patchwise with locked-in and locked-out areas}
   %\VignetteEngine{knitr::rmarkdown}
@@ -24,6 +23,7 @@ knitr::opts_chunk$set(
 	fig.align = "center",
   fig.width = 7,
   fig.height = 5,
+  fig.cap = "",
 	comment = "#>",
 	crop = TRUE
 )
