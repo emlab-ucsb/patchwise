@@ -12,12 +12,20 @@ VignetteBuilder:
 ---
 
 ```{r setup, include = FALSE}
+#for cropping whitespace from around figures, use crop = TRUE
+knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
+
 knitr::opts_chunk$set(
 	echo = TRUE,
 	message = FALSE,
 	warning = FALSE,
 	collapse = TRUE,
-	comment = "#>"
+	fig.align = "center",
+  fig.width = 7, 
+  fig.height = 5,
+	fig.cap = FALSE,
+	comment = "#>",
+	crop = TRUE
 )
 ```
 
