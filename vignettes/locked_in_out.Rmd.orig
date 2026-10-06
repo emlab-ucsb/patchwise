@@ -1,7 +1,7 @@
 ---
 title: "Using patchwise with locked-in and locked-out areas"
 output: rmarkdown::html_vignette
-fig_caption: no
+fig_caption: false
 vignette: >
   %\VignetteIndexEntry{Using patchwise with locked-in and locked-out areas}
   %\VignetteEngine{knitr::rmarkdown}
