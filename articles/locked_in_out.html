@@ -135,8 +135,10 @@ as our locked in area</p>
 area:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">fish_distributions</span>, <span class="va">seamounts</span>, <span class="va">locked_area</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/visualize-data-1.png" alt="plot of chunk visualize-data"><div class="figcaption">plot of chunk visualize-data</div>
+<div class="figure" style="text-align: center">
+<img src="figure/visualize-data-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 <p>Now we can continue using <code>patchwise</code> to group seamount
 areas so that entire seamount ranges are protected (and not portions of
@@ -171,8 +173,10 @@ scenarios.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">solution_no_patches</span>, <span class="va">sol_rast_patches</span><span class="op">)</span>,</span>
 <span>     fun <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/as.polygons.html" class="external-link">as.polygons</a></span><span class="op">(</span><span class="va">seamounts</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span>,</span>
 <span>     plg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Not selected"</span>, <span class="st">"Selected"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/prioritization-plot-1.png" alt="plot of chunk prioritization-plot"><div class="figcaption">plot of chunk prioritization-plot</div>
+<div class="figure" style="text-align: center">
+<img src="figure/prioritization-plot-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 </div>
 <div class="section level2">
@@ -195,8 +199,10 @@ is excluded in both scenarios.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">solution_no_patches</span>, <span class="va">sol_rast_patches</span><span class="op">)</span>,</span>
 <span>     fun <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/as.polygons.html" class="external-link">as.polygons</a></span><span class="op">(</span><span class="va">seamounts</span><span class="op">)</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/as.polygons.html" class="external-link">as.polygons</a></span><span class="op">(</span><span class="va">locked_area</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span>,</span>
 <span>     plg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Not selected"</span>, <span class="st">"Selected"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/prioritization-plot2-1.png" alt="plot of chunk prioritization-plot2"><div class="figcaption">plot of chunk prioritization-plot2</div>
+<div class="figure" style="text-align: center">
+<img src="figure/prioritization-plot2-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 </div>
 <div class="section level2">
@@ -223,8 +229,10 @@ than raster. First we polygonize the raster inputs</p>
 <p>Let’s check our features, seamounts and locked-in area look ok:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">features_sf</span>, <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">seamounts_sf</span><span class="op">)</span>, <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">locked_area_sf</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/unnamed-chunk-6-1.png" alt="plot of chunk unnamed-chunk-6"><div class="figcaption">plot of chunk unnamed-chunk-6</div>
+<div class="figure" style="text-align: center">
+<img src="figure/unnamed-chunk-6-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 <p>Now we can go through the same process of data prepration using
 <code>patchwise</code>, then runnning a prioritization using
@@ -323,8 +331,10 @@ distributions). The locked-in area is included in both solutions.</p>
 <span>       type <span class="op">=</span> <span class="st">"interval"</span>,</span>
 <span>       plg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Not selected"</span>, <span class="st">"Selected"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>       fun <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/as.polygons.html" class="external-link">as.polygons</a></span><span class="op">(</span><span class="va">seamounts</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/prioritization-plot-sf-1.png" alt="plot of chunk prioritization-plot-sf"><div class="figcaption">plot of chunk prioritization-plot-sf</div>
+<div class="figure" style="text-align: center">
+<img src="figure/prioritization-plot-sf-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 </div>
 <div class="section level2">
@@ -343,8 +353,10 @@ for the locked-out area.</p>
 <p>Plot our data</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">features_sf</span>, <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">seamounts_sf</span><span class="op">)</span>, <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">locked_area_sf</span><span class="op">)</span>, <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">locked_out_area</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/unnamed-chunk-8-1.png" alt="plot of chunk unnamed-chunk-8"><div class="figcaption">plot of chunk unnamed-chunk-8</div>
+<div class="figure" style="text-align: center">
+<img src="figure/unnamed-chunk-8-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create patches dataframe - this creates constraints so that entire seamount patches are protected</span></span>
@@ -438,8 +450,10 @@ whole seamount (also outlined in red)</p>
 <span>       type <span class="op">=</span> <span class="st">"interval"</span>,</span>
 <span>       plg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Not selected"</span>, <span class="st">"Selected"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>       fun <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/as.polygons.html" class="external-link">as.polygons</a></span><span class="op">(</span><span class="va">seamounts</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="va">locked_out_area_agg</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="figure/prioritization-plot-sf2-1.png" alt="plot of chunk prioritization-plot-sf2"><div class="figcaption">plot of chunk prioritization-plot-sf2</div>
+<div class="figure" style="text-align: center">
+<img src="figure/prioritization-plot-sf2-1.png" alt="FALSE"><p class="caption">
+FALSE
+</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
