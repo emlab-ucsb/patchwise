@@ -1,6 +1,7 @@
 ---
 title: "Using patchwise with locked-in and locked-out areas"
 output: rmarkdown::html_vignette
+fig_caption: no
 vignette: >
   %\VignetteIndexEntry{Using patchwise with locked-in and locked-out areas}
   %\VignetteEngine{knitr::rmarkdown}
@@ -69,8 +70,8 @@ plot(c(fish_distributions, seamounts, locked_area))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/visualize-data-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/visualize-data-1.png" alt="plot of chunk visualize-data"  />
+<p class="caption">plot of chunk visualize-data</p>
 </div>
 
 
@@ -109,8 +110,8 @@ plot(c(solution_no_patches, sol_rast_patches),
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/prioritization-plot-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/prioritization-plot-1.png" alt="plot of chunk prioritization-plot"  />
+<p class="caption">plot of chunk prioritization-plot</p>
 </div>
 
 # Implement locked-out areas using a `raster` input
@@ -129,8 +130,8 @@ plot(c(solution_no_patches, sol_rast_patches),
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/prioritization-plot2-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/prioritization-plot2-1.png" alt="plot of chunk prioritization-plot2"  />
+<p class="caption">plot of chunk prioritization-plot2</p>
 </div>
 
 # Implement locked-in areas using an `sf` input
@@ -164,8 +165,8 @@ plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/unnamed-chunk-6-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/unnamed-chunk-6-1.png" alt="plot of chunk unnamed-chunk-6"  />
+<p class="caption">plot of chunk unnamed-chunk-6</p>
 </div>
 
 Now we can go through the same process of data prepration using `patchwise`, then runnning a prioritization using `prioritizr`
@@ -267,8 +268,8 @@ cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patche
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/prioritization-plot-sf-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/prioritization-plot-sf-1.png" alt="plot of chunk prioritization-plot-sf"  />
+<p class="caption">plot of chunk prioritization-plot-sf</p>
 </div>
 
 # Implement locked-in and locked-out areas using an `sf` input
@@ -292,8 +293,8 @@ plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/unnamed-chunk-8-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/unnamed-chunk-8-1.png" alt="plot of chunk unnamed-chunk-8"  />
+<p class="caption">plot of chunk unnamed-chunk-8</p>
 </div>
 
 
@@ -396,6 +397,6 @@ cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patche
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/prioritization-plot-sf2-1.png" alt="FALSE"  />
-<p class="caption">FALSE</p>
+<img src="figure/prioritization-plot-sf2-1.png" alt="plot of chunk prioritization-plot-sf2"  />
+<p class="caption">plot of chunk prioritization-plot-sf2</p>
 </div>
