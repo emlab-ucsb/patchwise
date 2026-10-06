@@ -85,9 +85,7 @@ Let’s look at our fish distributions, seamounts and locked-in area:
 plot(c(fish_distributions, seamounts, locked_area))
 ```
 
-![plot of chunk visualize-data](figure/visualize-data-1.png)
-
-plot of chunk visualize-data
+![](figure/visualize-data-1.png)
 
 Now we can continue using `patchwise` to group seamount areas so that
 entire seamount ranges are protected (and not portions of seamounts) -
@@ -130,9 +128,7 @@ plot(c(solution_no_patches, sol_rast_patches),
      plg = list(legend = c("Not selected", "Selected")))
 ```
 
-![plot of chunk prioritization-plot](figure/prioritization-plot-1.png)
-
-plot of chunk prioritization-plot
+![](figure/prioritization-plot-1.png)
 
 ## Implement locked-out areas using a `raster` input
 
@@ -157,9 +153,7 @@ plot(c(solution_no_patches, sol_rast_patches),
      plg = list(legend = c("Not selected", "Selected")))
 ```
 
-![plot of chunk prioritization-plot2](figure/prioritization-plot2-1.png)
-
-plot of chunk prioritization-plot2
+![](figure/prioritization-plot2-1.png)
 
 ## Implement locked-in areas using an `sf` input
 
@@ -192,9 +186,7 @@ Let’s check our features, seamounts and locked-in area look ok:
 plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf)))
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
-
-plot of chunk unnamed-chunk-6
+![](figure/unnamed-chunk-6-1.png)
 
 Now we can go through the same process of data prepration using
 `patchwise`, then runnning a prioritization using `prioritizr`
@@ -300,10 +292,7 @@ cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patche
        fun = function()lines(as.polygons(seamounts, aggregate = TRUE), col = "red"))
 ```
 
-![plot of chunk
-prioritization-plot-sf](figure/prioritization-plot-sf-1.png)
-
-plot of chunk prioritization-plot-sf
+![](figure/prioritization-plot-sf-1.png)
 
 ## Implement locked-in and locked-out areas using an `sf` input
 
@@ -327,9 +316,7 @@ Plot our data
 plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf), st_drop_geometry(locked_out_area)))
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
-
-plot of chunk unnamed-chunk-8
+![](figure/unnamed-chunk-8-1.png)
 
 ``` r
 
@@ -430,7 +417,4 @@ cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patche
        fun = function()lines(rbind(as.polygons(seamounts, aggregate = TRUE), locked_out_area_agg), col = "red"))
 ```
 
-![plot of chunk
-prioritization-plot-sf2](figure/prioritization-plot-sf2-1.png)
-
-plot of chunk prioritization-plot-sf2
+![](figure/prioritization-plot-sf2-1.png)
