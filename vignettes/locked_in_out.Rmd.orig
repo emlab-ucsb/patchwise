@@ -23,7 +23,6 @@ knitr::opts_chunk$set(
 	fig.align = "center",
   fig.width = 7,
   fig.height = 5,
-  fig.cap = "",
 	comment = "#>",
 	crop = TRUE
 )
@@ -76,7 +75,7 @@ locked_area <- as.polygons(ext(5, 15, 25, 35)) |>
 
 Let's look at our fish distributions, seamounts and locked-in area:
 
-```{r visualize-data}
+```{r visualize-data, fig.cap = ""}
 plot(c(fish_distributions, seamounts, locked_area))
 ```
 
@@ -134,7 +133,7 @@ solution_no_patches <- solve(problem_no_patches) |>
 
 We can now plot the solutions, and overlaying the outlines of the seamounts (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The square, locked-in area is included in both scenarios.
 
-```{r prioritization-plot}
+```{r prioritization-plot, fig.cap = ""}
 plot(c(solution_no_patches, sol_rast_patches),
      fun = function()lines(as.polygons(seamounts), col = "red"),
      plg = list(legend = c("Not selected", "Selected")))
@@ -181,7 +180,7 @@ solution_no_patches <- solve(problem_no_patches) |>
 
 We can now plot the solutions, and overlaying the outlines of the seamounts and locked-out area (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The square, locked-out area (red outline) is excluded in both scenarios.
 
-```{r prioritization-plot2}
+```{r prioritization-plot2, fig.cap = ""}
 plot(c(solution_no_patches, sol_rast_patches),
      fun = function()lines(rbind(as.polygons(seamounts), as.polygons(locked_area)), col = "red"),
      plg = list(legend = c("Not selected", "Selected")))
@@ -211,7 +210,7 @@ locked_area_sf <- as.polygons(locked_area, aggregate = FALSE) |>
 
 Let's check our features, seamounts and locked-in area look ok:
 
-```{r}
+```{r fig.cap = ""}
 plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf)))
 ```
 
@@ -263,7 +262,7 @@ solution_no_patches_sf <- solve(problem_no_patches_sf)
 
 We can now plot the solutions, and overlaying the outlines of the seamounts (in red), we can see that one entire seamount is included in the solution that used `patchwise`, whereas the solution without `patchwise` selects a few planning units in each seamount. Note that in the solution with `patchwise`, planning units that overlap seamounts that are not entirely selected have also been selected to meet targets for other features (fish distributions). The locked-in area is included in both solutions.
 
-```{r prioritization-plot-sf}
+```{r prioritization-plot-sf, fig.cap = ""}
 cbind(solution_no_patches_sf[,"solution_1"], st_drop_geometry(solution_sf_patches[, "protected"])) |>
   setNames(c("Without patchwise", "With patchwise", "geometry")) |>
   vect() |>
@@ -287,7 +286,7 @@ locked_out_area <- as.polygons(ext(25, 35, 3, 13)) |>
 
 Plot our data
 
-```{r}
+```{r fig.cap = ""}
 plot(cbind(features_sf, st_drop_geometry(seamounts_sf), st_drop_geometry(locked_area_sf), st_drop_geometry(locked_out_area)))
 ```
 
@@ -340,7 +339,7 @@ solution_no_patches_sf <- solve(problem_no_patches_sf)
 
 The selected planning units all exclude the locked-out area (red outlined square), but include the locked-in area (selected cells in square pattern). The solution using `patchwise` includes a whole seamount (also outlined in red)
 
-```{r prioritization-plot-sf2}
+```{r prioritization-plot-sf2, fig.cap = ""}
 locked_out_area_agg <- vect(locked_out_area) |>
   aggregate(by = "Locked-out", count = FALSE) |>
   subset(`Locked-out` == 1, NSE = TRUE)
